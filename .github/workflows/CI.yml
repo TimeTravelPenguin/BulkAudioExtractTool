@@ -1,0 +1,75 @@
+name: CI
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      DISPLAY: :0
+      PYTEST_ADDOPTS: "--color=yes"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        python: [ "3.11","3.12" ]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      #- name: Setup macOS PATH
+      #  if: runner.os == 'macOS'
+      #  run: |
+      #    echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Check format with Black
+        run: |
+          poetry run black --check .
+
+      - name: Typecheck with mypy
+        run: |
+          poetry run mypy
+
+      - name: Run tests
+        run: |
+          source $VENV
+          poetry run pytest
