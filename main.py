@@ -46,10 +46,10 @@ def main():
             print("No audio streams found", file=sys.stderr)
             sys.exit(1)
 
-        input = ffmpeg.input(str(file))
+        input_file = ffmpeg.input(str(file))
 
         for i in audio_streams:
-            stream = input[f"a:{i}"]
+            stream = input_file[f"a:{i}"]
             outputs.append(stream.output(f"output{i}.aac", acodec="copy"))
 
         output = ffmpeg.merge_outputs(*outputs)
