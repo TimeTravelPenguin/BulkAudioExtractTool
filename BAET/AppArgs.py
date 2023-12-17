@@ -1,16 +1,10 @@
-from __future__ import annotations
-
 import argparse
 import re
-import sys
-from argparse import Namespace
-from itertools import chain, repeat
 from pathlib import Path
 from re import Pattern
 
 from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from rich.markdown import Markdown
-from rich.text import Text
 from rich_argparse import RichHelpFormatter
 from typing_extensions import Annotated
 

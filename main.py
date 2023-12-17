@@ -1,7 +1,5 @@
 import sys
-from pathlib import Path
 
-import ffmpeg
 import rich
 from rich.traceback import install
 
