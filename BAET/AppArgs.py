@@ -1,18 +1,14 @@
+from __future__ import annotations
+
 import argparse
 import re
 import sys
+from argparse import Namespace
+from itertools import chain, repeat
 from pathlib import Path
 from re import Pattern
 
-import rich
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    DirectoryPath,
-    Field,
-    FilePath,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from rich.markdown import Markdown
 from rich.text import Text
 from rich_argparse import RichHelpFormatter
@@ -23,29 +19,9 @@ from BAET.Console import console
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
-class AppArgs(BaseModel):
-    """Application commandline arguments.
-
-    Raises:
-        ValueError: The provided path is not a directory.
-
-    Returns:
-        DirectoryPath: Validated directory path.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    input: DirectoryPath | FilePath | list[FilePath] = Field(...)
-    output_dir: DirectoryPath | None = Field(...)
-    overwrite_existing: bool = Field(...)
-    fallback_sample_rate: Annotated[int, Field(gt=0)] = Field(...)
-    trim: bool = Field(...)
-    dry_run: bool = Field(...)
-    output_subdirs: bool = Field(...)
+class InputFilters(BaseModel):
     include: Pattern | None = Field(...)
     exclude: Pattern | None = Field(...)
-    acodec: str = Field(...)
-    file_type: str = Field(...)
 
     @field_validator("include", mode="before")
     @classmethod
@@ -71,6 +47,14 @@ class AppArgs(BaseModel):
         else:
             return v
 
+
+class OutputConfigurationOptions(BaseModel):
+    overwrite_existing: bool = Field(...)
+    no_output_subdirs: bool = Field(...)
+    acodec: str = Field(...)
+    fallback_sample_rate: Annotated[int, Field(gt=0)] = Field(...)
+    file_type: str = Field(...)
+
     @field_validator("file_type", mode="before")
     @classmethod
     def validate_file_type(cls, v: str):
@@ -78,6 +62,32 @@ class AppArgs(BaseModel):
         if matched:
             return matched.group(1)
         raise ValueError(f"Invalid file type: {v}")
+
+
+class DebugOptions(BaseModel):
+    logging: bool = Field(...)
+    dry_run: bool = Field(...)
+    trim: Annotated[int, Field(gt=0)] | None = Field(...)
+    print_args: bool = Field(...)
+
+
+class AppArgs(BaseModel):
+    """Application commandline arguments.
+
+    Raises:
+        ValueError: The provided path is not a directory.
+
+    Returns:
+        DirectoryPath: Validated directory path.
+    """
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    input_dir: DirectoryPath = Field(...)
+    output_dir: DirectoryPath = Field(...)
+    input_filters: InputFilters = Field(...)
+    output_configuration: OutputConfigurationOptions = Field(...)
+    debug_options: DebugOptions = Field(...)
 
 
 def GetArgs() -> AppArgs:
@@ -117,41 +127,29 @@ Extract audio from a directory of videos using FFMPEG.
         "Options to control the source and destination directories of input and output files.",
     )
 
-    input_group = io_group.add_mutually_exclusive_group(required=True)
-
-    input_group.add_argument(
+    io_group.add_argument(
         "-i",
         "--input-dir",
         default=None,
         action="store",
-        dest="input",
-        type=Path,
+        type=DirectoryPath,
         metavar="INPUT_DIR",
+        required=True,
         help="Source directory.",
-    )
-
-    input_group.add_argument(
-        "-f",
-        "--input-file",
-        default=None,
-        action="append",
-        dest="input",
-        type=Path,
-        metavar="FILE",
-        help="Add a source file.",
     )
 
     io_group.add_argument(
         "-o",
         "--output-dir",
         default=None,
+        action="store",
         type=Path,
-        help="Destination directory. Default is set to the input directory. To use the current directory, use [green]'.'[/green]",
+        help="Destination directory. Default is set to the input directory. To use the current directory, use [blue]'.'[/blue].",
     )
 
     query_group = parser.add_argument_group(
-        title="Query Configuration",
-        description="Configure how the application selects files to process.",
+        title="Input Filter Configuration",
+        description="Configure how the application includes and excludes files to process.",
     )
 
     query_group.add_argument(
@@ -214,6 +212,13 @@ Extract audio from a directory of videos using FFMPEG.
     )
 
     debug_group.add_argument(
+        "--logging",
+        default=False,
+        action="store_true",
+        help="Show the logging of application execution.",
+    )
+
+    debug_group.add_argument(
         "--print-args",
         default=False,
         action="store_true",
@@ -229,14 +234,40 @@ Extract audio from a directory of videos using FFMPEG.
 
     debug_group.add_argument(
         "--trim-short",
-        default=10,
+        default=None,
+        type=int,
+        dest="trim",
         help="Trim the audio to the specified number of seconds. This is useful for testing.",
     )
 
     args = parser.parse_args()
 
-    if args.print_args:
-        rich.print(vars(args))
-        sys.exit(0)
+    if not args.output_dir:
+        args.output_dir = args.input_dir
 
-    return AppArgs.model_validate(vars(args), strict=False)
+    input_filters = InputFilters(include=args.include, exclude=args.exclude)
+    output_config = OutputConfigurationOptions(
+        overwrite_existing=args.overwrite_existing,
+        no_output_subdirs=args.no_output_subdirs,
+        acodec=args.acodec,
+        fallback_sample_rate=args.fallback_sample_rate,
+        file_type=args.file_type,
+    )
+    debug_options = DebugOptions(
+        logging=args.logging,
+        dry_run=args.dry_run,
+        trim=args.trim,
+        print_args=args.print_args,
+    )
+
+    app_args = AppArgs.model_validate(
+        {
+            "input_dir": args.input_dir,
+            "output_dir": args.output_dir,
+            "input_filters": input_filters,
+            "output_configuration": output_config,
+            "debug_options": debug_options,
+        }
+    )
+
+    return app_args
