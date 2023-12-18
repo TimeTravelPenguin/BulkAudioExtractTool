@@ -21,8 +21,11 @@ class AudioExtractor:
         self.output_configuration = app_args.output_configuration
         self.debug_options = app_args.debug_options
 
-        if not self.output_configuration.no_output_subdirs:
-            self.output_dir = self.output_dir / self.file.stem
+        self.output_dir = (
+            self.output_dir
+            if not self.output_configuration.no_output_subdirs
+            else self.output_dir / self.file.stem
+        )
 
     def extract(self):
         try:
@@ -52,18 +55,26 @@ class AudioExtractor:
             # todo: make command flag
         output = ffmpeg.merge_outputs(*outputs)
         self.print_ffmpeg_cmd(output)
-        ffmpeg.run_async(output).wait()
+
+        info_logger.info("Extracting audio to %s", self.output_dir)
+        if not self.debug_options.dry_run:
+            output.run()
 
     def create_output(self, input_file, stream):
         index = stream["index"]
-        console.print(stream)
         audio_stream = input_file[f"a:{index - 1}"]
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        filename = (
+            f"{self.file.stem}_track{index}.{self.output_configuration.file_type}"
+        )
+
+        info_logger.info("Creating output file %s", str(self.output_dir / filename))
+
         return ffmpeg.output(
             audio_stream,
-            f"{self.output_dir / self.file.stem}_track{index}.{self.output_configuration.file_type}",
+            str(self.output_dir / filename),
             acodec=self.output_configuration.acodec,
             audio_bitrate=(
                 stream["sample_rate"] or self.output_configuration.fallback_sample_rate
@@ -82,8 +93,6 @@ class AudioExtractor:
 
         if not audio_streams:
             raise ValueError("No audio streams found")
-
-        console.print(audio_streams)
 
         return audio_streams
 
