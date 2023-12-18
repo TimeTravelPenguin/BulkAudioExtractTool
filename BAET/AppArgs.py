@@ -6,10 +6,10 @@ from pydantic import DirectoryPath
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.markdown import Markdown
 from rich.padding import Padding
-from rich.rule import Rule
 from rich.table import Table
+from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
-from rich_argparse import RichHelpFormatter
+from rich_argparse import HelpPreviewAction, RichHelpFormatter
 
 from BAET.Console import console
 from BAET.Types import (
@@ -64,10 +64,7 @@ class AppDescription:
         for key, value in desc_kvps:
             grid.add_row(key, value)
 
-        grid.add_row()
-
         yield grid
-        yield Rule(Text("Commandline arguments", style="bold"), align="center")
 
 
 def new_empty_argparser() -> ArgumentParser:
@@ -76,6 +73,14 @@ def new_empty_argparser() -> ArgumentParser:
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
     description = AppDescription()
+
+    RichHelpFormatter.highlights.append(
+        r"(?P<arg_default_parens>\((?P<arg_default>Default: (?P<arg_default_value>.*))\))"
+    )
+
+    RichHelpFormatter.highlights.append(r"(?P<help_keyword>ffmpeg|ffprobe)")
+
+    RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
     return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (BAET)",
@@ -106,7 +111,6 @@ def GetArgs() -> AppArgs:
     io_group.add_argument(
         "-i",
         "--input-dir",
-        default=None,
         action="store",
         type=DirectoryPath,
         metavar="INPUT_DIR",
@@ -120,7 +124,7 @@ def GetArgs() -> AppArgs:
         default=None,
         action="store",
         type=Path,
-        help='Destination directory. Default is set to the input directory. To use the current directory, use [blue]"."[/].',
+        help='Destination directory. Default is set to the input directory. To use the current directory, use [blue]"."[/]. (Default: None)',
     )
 
     query_group = parser.add_argument_group(
@@ -132,14 +136,14 @@ def GetArgs() -> AppArgs:
         "--include",
         default=None,
         metavar="REGEX",
-        help="If provided, only include files that match a regex pattern.",
+        help='[TODO] If provided, only include files that match a regex pattern. (Default: ".*")',
     )
 
     query_group.add_argument(
         "--exclude",
         default=None,
         metavar="REGEX",
-        help="If provided, exclude files that match a regex pattern.",
+        help="[TODO] If provided, exclude files that match a regex pattern. (Default: None)",
     )
 
     output_group = parser.add_argument_group(
@@ -151,42 +155,42 @@ def GetArgs() -> AppArgs:
         "--output-streams-separately",
         default=False,
         action="store_true",
-        help="When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, a single command is given to FFMPEG to export all streams. This latter option will result in all files appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag may be useful when experiencing errors.",
+        help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, a single command is given to ffmpeg to export all streams. This latter option will result in all files appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag may be useful when experiencing errors. (Default: False)",
     )
 
     output_group.add_argument(
         "--overwrite-existing",
         default=False,
         action="store_true",
-        help="Overwrite a file if it already exists.",
+        help="Overwrite a file if it already exists. (Default: False)",
     )
 
     output_group.add_argument(
         "--no-output-subdirs",
         default=True,
         action="store_true",
-        help="Do not create subdirectories for each video's extracted audio tracks in the output directory.",
+        help="Do not create subdirectories for each video's extracted audio tracks in the output directory. (Default: True)",
     )
 
     output_group.add_argument(
         "--acodec",
         default="pcm_s16le",
         metavar="CODEC",
-        help="The audio codec to use when extracting audio.",
+        help='[TODO] The audio codec to use when extracting audio. (Default: "pcm_s16le")',
     )
 
     output_group.add_argument(
         "--fallback-sample-rate",
         default=48000,
         metavar="RATE",
-        help="The sample rate to use if it cannot be determined via [blue]ffprobe[/].",
+        help="[TODO] The sample rate to use if it cannot be determined via [blue]ffprobe[/]. (Default: 48000)",
     )
 
     output_group.add_argument(
         "--file-type",
         default="wav",
         metavar="EXT",
-        help="The file type to use for the extracted audio.",
+        help='[TODO] The file type to use for the extracted audio. (Default: "wav")',
     )
 
     debug_group = parser.add_argument_group(
@@ -198,21 +202,28 @@ def GetArgs() -> AppArgs:
         "--logging",
         default=False,
         action="store_true",
-        help="Show the logging of application execution.",
+        help="[TODO] Show the logging of application execution. (Default: False)",
     )
 
     debug_group.add_argument(
         "--print-args",
         default=False,
         action="store_true",
-        help="Print the parsed arguments and exit.",
+        help="Print the parsed arguments and exit. (Default: False)",
     )
 
     debug_group.add_argument(
         "--dry-run",
         default=False,
         action="store_true",
-        help="Run the program without actually extracting any audio.",
+        help="Run the program without actually extracting any audio. (Default: False)",
+    )
+
+    debug_group.add_argument(
+        "--show-ffmpeg-cmd",
+        default=False,
+        action="store_true",
+        help="[TODO] Print to the console the generated ffmpeg command. (Default: False)",
     )
 
     debug_group.add_argument(
@@ -220,15 +231,23 @@ def GetArgs() -> AppArgs:
         default=None,
         type=int,
         dest="trim",
-        help="Trim the audio to the specified number of seconds. This is useful for testing.",
+        help="[TODO] Trim the audio to the specified number of seconds. This is useful for testing. (Default: None)",
+    )
+
+    parser.add_argument(
+        "--generate-help-preview",
+        action=HelpPreviewAction,
+        path="help-preview.svg",  # (optional) or "help-preview.html" or "help-preview.txt"
+        export_kwds={
+            "theme": DIMMED_MONOKAI
+        },  # (optional) keywords passed to console.save_... methods
+        help=argparse.SUPPRESS,
     )
 
     args = parser.parse_args()
 
-    if not args.output_dir:
-        args.output_dir = args.input_dir
-
     input_filters = InputFilters(include=args.include, exclude=args.exclude)
+
     output_config = OutputConfigurationOptions(
         overwrite_existing=args.overwrite_existing,
         no_output_subdirs=args.no_output_subdirs,
@@ -236,6 +255,7 @@ def GetArgs() -> AppArgs:
         fallback_sample_rate=args.fallback_sample_rate,
         file_type=args.file_type,
     )
+
     debug_options = DebugOptions(
         logging=args.logging,
         dry_run=args.dry_run,
@@ -245,8 +265,8 @@ def GetArgs() -> AppArgs:
 
     app_args = AppArgs.model_validate(
         {
-            "input_dir": args.input_dir,
-            "output_dir": args.output_dir,
+            "input_dir": args.input_dir.expanduser(),
+            "output_dir": args.output_dir or args.input_dir.expanduser(),
             "input_filters": input_filters,
             "output_configuration": output_config,
             "debug_options": debug_options,
