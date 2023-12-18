@@ -1,119 +1,101 @@
 import argparse
-import re
+from argparse import ArgumentParser
 from pathlib import Path
-from re import Pattern
 
-from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
+from pydantic import DirectoryPath
+from rich.console import Console, ConsoleOptions, RenderResult
 from rich.markdown import Markdown
+from rich.padding import Padding
+from rich.rule import Rule
+from rich.table import Table
+from rich.text import Text
 from rich_argparse import RichHelpFormatter
-from typing_extensions import Annotated
 
 from BAET.Console import console
+from BAET.Types import (
+    AppArgs,
+    AppVersion,
+    DebugOptions,
+    InputFilters,
+    OutputConfigurationOptions,
+)
 
-file_type_pattern = re.compile(r"^\.?(\w+)$")
-
-
-class InputFilters(BaseModel):
-    include: Pattern | None = Field(...)
-    exclude: Pattern | None = Field(...)
-
-    @field_validator("include", mode="before")
-    @classmethod
-    def validate_include_nonempty(cls, v: str):
-        if not v or not str.strip(v):
-            return ".*"
-        return v
-
-    @field_validator("exclude", mode="before")
-    @classmethod
-    def validate_exclude_nonempty(cls, v: str):
-        if not v or not str.strip(v):
-            return None
-        return v
-
-    @field_validator("include", "exclude", mode="before")
-    @classmethod
-    def compile_to_pattern(cls, v: str):
-        if not v:
-            return None
-        if isinstance(v, str):
-            return re.compile(v)
-        else:
-            return v
+APP_VERSION = AppVersion(1, 0, 0, "alpha")
 
 
-class OutputConfigurationOptions(BaseModel):
-    overwrite_existing: bool = Field(...)
-    no_output_subdirs: bool = Field(...)
-    acodec: str = Field(...)
-    fallback_sample_rate: Annotated[int, Field(gt=0)] = Field(...)
-    file_type: str = Field(...)
+class AppDescription:
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        yield Markdown("# Bulk Audio Extract Tool (BAET)")
+        yield "Extract audio from a directory of videos using FFMPEG.\n"
 
-    @field_validator("file_type", mode="before")
-    @classmethod
-    def validate_file_type(cls, v: str):
-        matched = file_type_pattern.match(v)
-        if matched:
-            return matched.group(1)
-        raise ValueError(f"Invalid file type: {v}")
+        website_link = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
+        desc_kvps = [
+            (
+                Padding(Text("App name:", justify="right"), (0, 5, 0, 0)),
+                Text(
+                    "Bulk Audio Extract Tool (BAET)",
+                    style="argparse.prog",
+                    justify="left",
+                ),
+            ),
+            (
+                Padding(Text("Version:", justify="right"), (0, 5, 0, 0)),
+                Text(str(APP_VERSION), style="app.version", justify="left"),
+            ),
+            (
+                Padding(Text("Author:", justify="right"), (0, 5, 0, 0)),
+                Text("Phillip Smith", style="bright_yellow", justify="left"),
+            ),
+            (
+                Padding(Text("Website:", justify="right"), (0, 5, 0, 0)),
+                Text(
+                    website_link,
+                    style=f"underline blue link {website_link}",
+                    justify="left",
+                ),
+            ),
+        ]
+
+        grid = Table.grid(expand=True)
+        grid.add_column(justify="left")
+        grid.add_column(justify="right")
+        for key, value in desc_kvps:
+            grid.add_row(key, value)
+
+        grid.add_row()
+
+        yield grid
+        yield Rule(Text("Commandline arguments", style="bold"), align="center")
 
 
-class DebugOptions(BaseModel):
-    logging: bool = Field(...)
-    dry_run: bool = Field(...)
-    trim: Annotated[int, Field(gt=0)] | None = Field(...)
-    print_args: bool = Field(...)
-
-
-class AppArgs(BaseModel):
-    """Application commandline arguments.
-
-    Raises:
-        ValueError: The provided path is not a directory.
-
-    Returns:
-        DirectoryPath: Validated directory path.
-    """
-
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    input_dir: DirectoryPath = Field(...)
-    output_dir: DirectoryPath = Field(...)
-    input_filters: InputFilters = Field(...)
-    output_configuration: OutputConfigurationOptions = Field(...)
-    debug_options: DebugOptions = Field(...)
-
-
-def GetArgs() -> AppArgs:
+def new_empty_argparser() -> ArgumentParser:
     def get_formatter(prog):
         return RichHelpFormatter(prog, max_help_position=35, console=console)
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
-    description = Markdown(
-        """
-# Bulk Audio Extract Tool (BAET)
+    description = AppDescription()
 
-Extract audio from a directory of videos using FFMPEG.
-
-### Website: [https://github.com/TimeTravelPenguin/BulkAudioExtractTool](https://github.com/TimeTravelPenguin/BulkAudioExtractTool)
-""",
-    )
-
-    parser = argparse.ArgumentParser(
+    return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (BAET)",
         description=description,  # type: ignore
         epilog=Markdown(
-            "Author: Phillip Smith, 2023",
+            "Phillip Smith, 2023",
             justify="right",
             style="argparse.prog",
         ),  # type: ignore
         formatter_class=get_formatter,
     )
 
+
+def GetArgs() -> AppArgs:
+    parser = new_empty_argparser()
+
     parser.add_argument(
         "--version",
         action="version",
-        version="[argparse.prog]%(prog)s[/] version [i]1.0.0[/]",
+        version=f"[argparse.prog]%(prog)s[/] version [i]{APP_VERSION}[/]",
     )
 
     io_group = parser.add_argument_group(
@@ -138,7 +120,7 @@ Extract audio from a directory of videos using FFMPEG.
         default=None,
         action="store",
         type=Path,
-        help="Destination directory. Default is set to the input directory. To use the current directory, use [blue]'.'[/blue].",
+        help='Destination directory. Default is set to the input directory. To use the current directory, use [blue]"."[/].',
     )
 
     query_group = parser.add_argument_group(
@@ -166,6 +148,13 @@ Extract audio from a directory of videos using FFMPEG.
     )
 
     output_group.add_argument(
+        "--output-streams-separately",
+        default=False,
+        action="store_true",
+        help="When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, a single command is given to FFMPEG to export all streams. This latter option will result in all files appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag may be useful when experiencing errors.",
+    )
+
+    output_group.add_argument(
         "--overwrite-existing",
         default=False,
         action="store_true",
@@ -190,7 +179,7 @@ Extract audio from a directory of videos using FFMPEG.
         "--fallback-sample-rate",
         default=48000,
         metavar="RATE",
-        help="The sample rate to use if it cannot be determined via [blue]ffprobe[/blue].",
+        help="The sample rate to use if it cannot be determined via [blue]ffprobe[/].",
     )
 
     output_group.add_argument(
