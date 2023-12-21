@@ -7,6 +7,7 @@ from BAET.AppArgs import GetArgs
 from BAET.AudioExtractor import AudioExtractor
 from BAET.Logging import info_logger
 
+
 install(show_locals=True)
 
 VIDEO_EXTENSIONS = [".mp4", ".mkv"]

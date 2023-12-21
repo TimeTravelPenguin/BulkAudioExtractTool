@@ -9,6 +9,15 @@ from BAET.Console import console, error_console
 from BAET.Logging import info_logger
 
 
+def print_ffmpeg_cmd(output):
+    compiled = " ".join(ffmpeg.compile(output))
+
+    md_user = f"{getpass.getuser()}:~$"
+    cmd = Markdown(f"```console\n{md_user} {compiled}\n```")
+
+    console.print(cmd)
+
+
 class AudioExtractor:
     def __init__(
         self,
@@ -43,20 +52,27 @@ class AudioExtractor:
         ffmpeg_input = ffmpeg.input(str(self.file))
 
         info_logger.info("Creating ffmpeg command to extract each stream")
+
         outputs = []
         for stream in audio_streams:
             out = self.create_output(ffmpeg_input, stream)
-
-            if self.output_configuration.overwrite_existing:
-                out = ffmpeg.overwrite_output(out)
-
             outputs.append(out)
 
-            # todo: make command flag
-        output = ffmpeg.merge_outputs(*outputs)
-        self.print_ffmpeg_cmd(output)
-
         info_logger.info("Extracting audio to %s", self.output_dir)
+
+        if not self.output_configuration.output_streams_separately:
+            output = ffmpeg.merge_outputs(*outputs)
+            self._run(output)
+            return
+
+        for output in outputs:
+            self._run(output)
+
+    def _run(self, output):
+        if self.output_configuration.overwrite_existing:
+            output = ffmpeg.overwrite_output(output)
+        if self.debug_options.show_ffmpeg_cmd:
+            print(output)
         if not self.debug_options.dry_run:
             output.run()
 
@@ -95,11 +111,3 @@ class AudioExtractor:
             raise ValueError("No audio streams found")
 
         return audio_streams
-
-    def print_ffmpeg_cmd(self, output):
-        compiled = " ".join(ffmpeg.compile(output))
-
-        md_user = f"{getpass.getuser()}:~$"
-        cmd = Markdown(f"```console\n{md_user} {compiled}\n```")
-
-        console.print(cmd)

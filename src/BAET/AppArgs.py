@@ -20,6 +20,7 @@ from BAET.Types import (
     OutputConfigurationOptions,
 )
 
+
 APP_VERSION = AppVersion(1, 0, 0, "alpha")
 
 
@@ -27,7 +28,7 @@ class AppDescription:
     def __rich_console__(
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
-        yield Markdown("# Bulk Audio Extract Tool (BAET)")
+        yield Markdown("# Bulk Audio Extract Tool (src)")
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
         website_link = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
@@ -35,7 +36,7 @@ class AppDescription:
             (
                 Padding(Text("App name:", justify="right"), (0, 5, 0, 0)),
                 Text(
-                    "Bulk Audio Extract Tool (BAET)",
+                    "Bulk Audio Extract Tool (src)",
                     style="argparse.prog",
                     justify="left",
                 ),
@@ -83,7 +84,7 @@ def new_empty_argparser() -> ArgumentParser:
     RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
     return argparse.ArgumentParser(
-        prog="Bulk Audio Extract Tool (BAET)",
+        prog="Bulk Audio Extract Tool (src)",
         description=description,  # type: ignore
         epilog=Markdown(
             "Phillip Smith, 2023",
@@ -124,7 +125,8 @@ def GetArgs() -> AppArgs:
         default=None,
         action="store",
         type=Path,
-        help='Destination directory. Default is set to the input directory. To use the current directory, use [blue]"."[/]. (Default: None)',
+        help="Destination directory. Default is set to the input directory. To use the current directory, "
+        'use [blue]"."[/]. (Default: None)',
     )
 
     query_group = parser.add_argument_group(
@@ -155,7 +157,10 @@ def GetArgs() -> AppArgs:
         "--output-streams-separately",
         default=False,
         action="store_true",
-        help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, a single command is given to ffmpeg to export all streams. This latter option will result in all files appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag may be useful when experiencing errors. (Default: False)",
+        help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, "
+        "a single command is given to ffmpeg to export all streams. This latter option will result in all files "
+        "appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag "
+        "may be useful when experiencing errors. (Default: False)",
     )
 
     output_group.add_argument(
@@ -169,7 +174,8 @@ def GetArgs() -> AppArgs:
         "--no-output-subdirs",
         default=True,
         action="store_true",
-        help="Do not create subdirectories for each video's extracted audio tracks in the output directory. (Default: True)",
+        help="Do not create subdirectories for each video's extracted audio tracks in the output directory. "
+        "(Default: True)",
     )
 
     output_group.add_argument(
@@ -249,6 +255,7 @@ def GetArgs() -> AppArgs:
     input_filters = InputFilters(include=args.include, exclude=args.exclude)
 
     output_config = OutputConfigurationOptions(
+        output_streams_separately=args.output_streams_separately,
         overwrite_existing=args.overwrite_existing,
         no_output_subdirs=args.no_output_subdirs,
         acodec=args.acodec,
@@ -261,6 +268,7 @@ def GetArgs() -> AppArgs:
         dry_run=args.dry_run,
         trim=args.trim,
         print_args=args.print_args,
+        show_ffmpeg_cmd=args.show_ffmpeg_cmd,
     )
 
     app_args = AppArgs.model_validate(

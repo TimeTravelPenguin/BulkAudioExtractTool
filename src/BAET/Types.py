@@ -58,6 +58,7 @@ class InputFilters(BaseModel):
 
 
 class OutputConfigurationOptions(BaseModel):
+    output_streams_separately: bool = Field(...)
     overwrite_existing: bool = Field(...)
     no_output_subdirs: bool = Field(...)
     acodec: str = Field(...)

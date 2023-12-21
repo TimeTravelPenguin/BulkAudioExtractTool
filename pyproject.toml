@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "BAET"
+version = "1.0.0-alpha"
+description = ""
+authors = ["TimeTravelPenguins <TimeTravelPenguin@gmail.com>"]
+readme = "README.md"
+packages = [{include = "BAET", from = "src"}]
+
+[tool.poetry.scripts]
+baet = "src.main:main"
+
+[tool.poetry.dev-dependencies]
+black            = "*"
+isort            = "*"
+mypy             = "*"
+pylint           = "*"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+ffmpeg-python = "^0.2.0"
+pydantic = "^2.5.2"
+rich = "^13.7.0"
+rich-argparse = "^1.4.0"
+
+[tool.black]
+target-version = ["py312"]
+
+[tool.isort]
+profile    = "black"
+py_version = 312
+
+[tool.mypy]
+disallow_untyped_decorators = false
+install_types  = true
+python_version = "3.12"
+strict         = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
