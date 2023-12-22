@@ -79,6 +79,7 @@ class DebugOptions(BaseModel):
     dry_run: bool = Field(...)
     trim: Annotated[int, Field(gt=0)] | None = Field(...)
     print_args: bool = Field(...)
+    show_ffmpeg_cmd: bool = Field(...)
 
 
 class AppArgs(BaseModel):

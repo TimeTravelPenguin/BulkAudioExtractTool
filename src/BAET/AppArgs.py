@@ -278,7 +278,8 @@ def GetArgs() -> AppArgs:
             "input_filters": input_filters,
             "output_configuration": output_config,
             "debug_options": debug_options,
-        }
+        },
+        strict=True,
     )
 
     return app_args
