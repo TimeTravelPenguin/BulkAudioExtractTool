@@ -1,4 +1,0 @@
-ffmpeg_python>=0.2.0
-pydantic>=2.5.2
-rich>=13.7.0
-rich-argparse>=1.4.0

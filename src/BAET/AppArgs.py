@@ -70,7 +70,7 @@ class AppDescription:
 
 def new_empty_argparser() -> ArgumentParser:
     def get_formatter(prog):
-        return RichHelpFormatter(prog, max_help_position=35, console=console)
+        return RichHelpFormatter(prog, max_help_position=40, console=console)
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
     description = AppDescription()
@@ -155,6 +155,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--output-streams-separately",
+        "--sep",
         default=False,
         action="store_true",
         help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, "
@@ -165,6 +166,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--overwrite-existing",
+        "--overwrite",
         default=False,
         action="store_true",
         help="Overwrite a file if it already exists. (Default: False)",
@@ -172,7 +174,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--no-output-subdirs",
-        default=True,
+        default=False,
         action="store_true",
         help="Do not create subdirectories for each video's extracted audio tracks in the output directory. "
         "(Default: True)",
@@ -205,6 +207,16 @@ def GetArgs() -> AppArgs:
     )
 
     debug_group.add_argument(
+        "--run-synchronously",
+        "--sync",
+        default=False,
+        action="store_true",
+        help="[TODO] Run each each job in order. This should reduce the CPU workload, but may increase runtime. A "
+        "'job' is per file input, regardless of whether ffmpeg commands are merged (see: "
+        "`--output-streams-separately`). (Default: False)",
+    )
+
+    debug_group.add_argument(
         "--logging",
         default=False,
         action="store_true",
@@ -227,6 +239,7 @@ def GetArgs() -> AppArgs:
 
     debug_group.add_argument(
         "--show-ffmpeg-cmd",
+        "--cmds",
         default=False,
         action="store_true",
         help="[TODO] Print to the console the generated ffmpeg command. (Default: False)",
@@ -269,6 +282,7 @@ def GetArgs() -> AppArgs:
         trim=args.trim,
         print_args=args.print_args,
         show_ffmpeg_cmd=args.show_ffmpeg_cmd,
+        run_synchronously=args.run_synchronously,
     )
 
     app_args = AppArgs.model_validate(

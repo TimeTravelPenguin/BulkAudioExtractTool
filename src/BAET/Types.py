@@ -4,6 +4,7 @@ from re import Pattern
 from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from typing_extensions import Annotated
 
+
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
@@ -80,6 +81,7 @@ class DebugOptions(BaseModel):
     trim: Annotated[int, Field(gt=0)] | None = Field(...)
     print_args: bool = Field(...)
     show_ffmpeg_cmd: bool = Field(...)
+    run_synchronously: bool = Field(...)
 
 
 class AppArgs(BaseModel):

@@ -1,7 +1,11 @@
+import contextlib
 import getpass
+import sys
 from pathlib import Path
+from subprocess import Popen
 
 import ffmpeg
+from ffmpeg.nodes import InputNode
 from rich.markdown import Markdown
 
 from BAET.AppArgs import AppArgs
@@ -16,6 +20,31 @@ def print_ffmpeg_cmd(output):
     cmd = Markdown(f"```console\n{md_user} {compiled}\n```")
 
     console.print(cmd)
+    console.print()
+
+
+@contextlib.contextmanager
+def probe_audio_streams(file: Path):
+    try:
+        info_logger.info('Probing "%s"', file)
+        probe = ffmpeg.probe(file)
+
+        audio_streams = [
+            stream
+            for stream in probe["streams"]
+            if "codec_type" in stream and stream["codec_type"] == "audio"
+        ]
+
+        if not audio_streams:
+            raise ValueError("No audio streams found")
+
+        info_logger.info("Found %d audio streams", len(audio_streams))
+        yield audio_streams
+
+    except (ffmpeg.Error, ValueError) as e:
+        info_logger.critical("%s: %s", type(e).__name__, e)
+        error_console.print_exception()
+        raise e
 
 
 class AudioExtractor:
@@ -37,77 +66,97 @@ class AudioExtractor:
         )
 
     def extract(self):
-        try:
-            audio_streams = self.probe_audio_stream()
-            info_logger.info("Found %d audio streams", len(audio_streams))
-        except ffmpeg.Error as e:
-            info_logger.critical("Found no audio streams")
-            error_console.print(e.stderr)
-            return None
-        except ValueError as e:
-            info_logger.critical("Found no audio streams")
-            error_console.print(e)
-            return None
+        ffmpeg_input: InputNode = ffmpeg.input(self.file)
+        workers = []
 
-        ffmpeg_input = ffmpeg.input(str(self.file))
+        with probe_audio_streams(self.file) as audio_streams:
+            # Check: does the indexing of audio stream relate to ffprobe index
+            # or to the index of the collected audio streams in ffmpeg_input["a:index"]?
+            for index, stream in enumerate(audio_streams):
+                # index = stream["index"]
 
-        info_logger.info("Creating ffmpeg command to extract each stream")
+                out = self._create_workers(
+                    ffmpeg_input,
+                    index,
+                    stream["sample_rate"] or self.output_configuration.sample_rate,
+                )
 
-        outputs = []
-        for stream in audio_streams:
-            out = self.create_output(ffmpeg_input, stream)
-            outputs.append(out)
+                workers.append(out)
 
         info_logger.info("Extracting audio to %s", self.output_dir)
 
-        if not self.output_configuration.output_streams_separately:
-            output = ffmpeg.merge_outputs(*outputs)
-            self._run(output)
+        # if not self.output_configuration.output_streams_separately:
+        #     output = ffmpeg.merge_outputs(*worker_pairs)
+        #     self._run(output)
+        #     return
+        #
+        # for output in worker_pairs:
+        #     self._run(output)
+
+        try:
+            for output in workers:
+                self._run_workers(output)
+        except Exception as e:
+            info_logger.critical("%s: %s", type(e).__name__, e)
+            error_console.print_exception()
+            raise e
+
+    def _run_workers(self, ffmpeg_output):
+        # if self.debug_options.show_ffmpeg_cmd:
+        #     print_ffmpeg_cmd(ffmpeg_write)
+
+        if self.debug_options.dry_run:
             return
 
-        for output in outputs:
-            self._run(output)
+        proc: Popen[bytes] = ffmpeg_output.run_async(pipe_stdout=True)
 
-    def _run(self, output):
-        if self.output_configuration.overwrite_existing:
-            output = ffmpeg.overwrite_output(output)
-        if self.debug_options.show_ffmpeg_cmd:
-            print(output)
-        if not self.debug_options.dry_run:
-            output.run()
+        while proc.poll() is None:
+            output = proc.stdout.readline().decode("utf-8")
+            console.print(output)
 
-    def create_output(self, input_file, stream):
-        index = stream["index"]
-        audio_stream = input_file[f"a:{index - 1}"]
+        if proc.returncode != 0:
+            info_logger.critical("Return code: %s", proc.returncode)
+            sys.exit(-1)
+            # todo: hangs here :(
 
+            # progress_text = input_data.decode("utf-8")
+            # console.print(progress_text)
+
+            # proc_write.stdin.write(input_data)
+
+            # Look for "frame=xx"
+            # if progress_text.startswith("frame="):
+            #     frame = int(progress_text.partition("=")[-1])  # Get the frame number
+            #     console.print(f"q: {frame}")
+
+        proc.wait()
+
+    def _create_workers(
+        self, ffmpeg_input: InputNode, stream_index: int, sample_rate: int
+    ):
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = (
-            f"{self.file.stem}_track{index}.{self.output_configuration.file_type}"
+        output_filename = Path(
+            f"{self.file.stem}_track{stream_index}.{self.output_configuration.file_type}"
         )
 
-        info_logger.info("Creating output file %s", str(self.output_dir / filename))
-
-        return ffmpeg.output(
-            audio_stream,
-            str(self.output_dir / filename),
-            acodec=self.output_configuration.acodec,
-            audio_bitrate=(
-                stream["sample_rate"] or self.output_configuration.fallback_sample_rate
-            ),
-            format=self.output_configuration.file_type,
+        # TODO: MOVE
+        info_logger.info(
+            "Creating output dir %s", self.output_dir / output_filename.stem
         )
 
-    def probe_audio_stream(self):
-        probe = ffmpeg.probe(self.file)
+        opt_kwargs = {
+            "acodec": self.output_configuration.acodec,
+            "audio_bitrate": sample_rate
+            or self.output_configuration.fallback_sample_rate,
+            "format": self.output_configuration.file_type,
+        }
 
-        audio_streams = [
-            stream
-            for stream in probe["streams"]
-            if "codec_type" in stream and stream["codec_type"] == "audio"
-        ]
+        output = ffmpeg_input[f"a:{stream_index}"].output(
+            str(output_filename), **opt_kwargs
+        )
 
-        if not audio_streams:
-            raise ValueError("No audio streams found")
+        if self.output_configuration.overwrite_existing:
+            output = output.overwrite_output()
 
-        return audio_streams
+        return output
