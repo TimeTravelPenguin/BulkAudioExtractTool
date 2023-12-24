@@ -41,7 +41,7 @@ class FFmpegProcess:
                 if "out_time_ms" in output:
                     val = output.split("=", 1)[1]
                     progress_handle(
-                        float(val) / 1_000_000,
+                        float(val),
                         desc=f"Stream index: {self.probe_stream['index']}",
                     )
 
@@ -74,7 +74,8 @@ class FFmpegProcessGroup:
             for output in self.outputs:
                 task = progress.add_task(
                     f"Preparing...",
-                    total=float(output.probe_stream["duration_ts"])
+                    total=1_000_000
+                    * float(output.probe_stream["duration_ts"])
                     * float(Fraction(output.probe_stream["time_base"])),
                 )
 
