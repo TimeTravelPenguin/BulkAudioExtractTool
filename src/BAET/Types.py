@@ -4,7 +4,6 @@ from re import Pattern
 from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from typing_extensions import Annotated
 
-
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
@@ -30,32 +29,22 @@ class AppVersion:
 
 
 class InputFilters(BaseModel):
-    include: Pattern | None = Field(...)
+    include: Pattern = Field(...)
     exclude: Pattern | None = Field(...)
 
     @field_validator("include", mode="before")
     @classmethod
     def validate_include_nonempty(cls, v: str):
-        if not v or not str.strip(v):
-            return ".*"
-        return v
+        if v is None or not v.strip():
+            return re.compile(".*")
+        return re.compile(v)
 
     @field_validator("exclude", mode="before")
     @classmethod
     def validate_exclude_nonempty(cls, v: str):
-        if not v or not str.strip(v):
+        if v is None or not v.strip():
             return None
-        return v
-
-    @field_validator("include", "exclude", mode="before")
-    @classmethod
-    def compile_to_pattern(cls, v: str):
-        if not v:
-            return None
-        if isinstance(v, str):
-            return re.compile(v)
-        else:
-            return v
+        return re.compile(v)
 
 
 class OutputConfigurationOptions(BaseModel):

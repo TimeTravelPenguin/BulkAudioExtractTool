@@ -20,7 +20,6 @@ from BAET.Types import (
     OutputConfigurationOptions,
 )
 
-
 APP_VERSION = AppVersion(1, 0, 0, "alpha")
 
 
