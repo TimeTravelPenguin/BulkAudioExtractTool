@@ -5,7 +5,7 @@ from rich.traceback import install
 
 from BAET.AppArgs import GetArgs
 from BAET.Console import console
-from BAET.FFmpegExtract.Extractor import FFmpegExtractor
+from BAET.FFmpegExtract import FFmpegExtractor
 from BAET.Logging import info_logger
 
 
