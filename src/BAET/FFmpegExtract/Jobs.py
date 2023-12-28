@@ -1,16 +1,21 @@
 import contextlib
-from collections import OrderedDict
 from collections.abc import Iterator
 from fractions import Fraction
 from pathlib import Path
 
 import ffmpeg
+from more_itertools import first_true, take
 
 from BAET.Console import error_console
-from BAET.FFmpegExtract import IndexedOutputs, StreamIndex
-from BAET.FFmpegExtract.Constants import VIDEO_EXTENSIONS
+from BAET.FFmpegExtract import VIDEO_EXTENSIONS
+from BAET.FFmpegExtract.Aliases import (
+    AudioStream,
+    IndexedAudioStream,
+    IndexedOutputs,
+    Millisecond,
+    StreamIndex,
+)
 from BAET.Logging import info_logger
-
 
 __all__ = ["FFmpegJobFactory", "FFmpegJob"]
 
@@ -18,7 +23,7 @@ from BAET.Types import InputFilters, OutputConfigurationOptions
 
 
 @contextlib.contextmanager
-def probe_audio_streams(file: Path) -> Iterator[list[dict]]:
+def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
     try:
         info_logger.info('Probing file "%s"', file)
         probe = ffmpeg.probe(file)
@@ -48,41 +53,40 @@ class FFmpegJob:
     def __init__(
         self,
         input_file: Path,
-        audio_streams: list[dict],
+        audio_streams: list[AudioStream],
         indexed_outputs: IndexedOutputs,
     ):
         self.input_file: Path = input_file
         self.indexed_outputs: IndexedOutputs = indexed_outputs
-        self.audio_streams: OrderedDict[StreamIndex, dict] = OrderedDict(
-            [(stream["index"], stream) for stream in audio_streams]
-        )
-        self.durations_ms_dict: dict[int, float] = {
-            stream["index"]: 1_000_000
-            * float(stream["duration_ts"])
-            * float(Fraction(stream["time_base"]))
-            for stream in audio_streams
+        self.audio_streams = audio_streams
+        self.indexed_audio_streams: IndexedAudioStream = dict()
+        for stream in audio_streams:
+            self.indexed_audio_streams[stream["index"]] = stream
+
+        # TODO: Do we need this?
+        self.durations_ms_dict: dict[StreamIndex, Millisecond] = {
+            stream["index"]: self.stream_duration_ms(stream) for stream in audio_streams
         }
 
-    def get_stream_duration_ms(self, stream_idx) -> float:
-        stream = next(
-            iter(
-                [
-                    stream
-                    for stream in self.audio_streams
-                    if stream["index"] == stream_idx
-                ]
-            ),
-            None,
-        )
-
-        if stream is None:
-            raise IndexError("Stream_index not found")
-
+    @classmethod
+    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond:
         return (
             1_000_000
             * float(stream["duration_ts"])
             * float(Fraction(stream["time_base"]))
         )
+
+    def stream(self, index: StreamIndex) -> AudioStream:
+        stream = first_true(
+            self.audio_streams,
+            default=None,
+            pred=lambda st: st["index"] == index,
+        )
+
+        if stream is None:
+            raise IndexError(f'Stream with index "{index}" not found')
+
+        return stream
 
 
 class FFmpegJobFactory:
@@ -97,6 +101,24 @@ class FFmpegJobFactory:
         self.output_dir = output_dir
         self.filters = filters
         self.output_configuration = output_configuration
+
+        self._jobs: list[FFmpegJob] = []
+        self._jobs_iter: Iterator[FFmpegJob] = self.build_jobs_iter()
+        self._job_count: int = 0
+
+    def __iter__(self) -> Iterator[FFmpegJob]:
+        for file in self.get_files():
+            yield self.build_job(file)
+
+    def __getitem__(self, item: int) -> FFmpegJob:
+        if item < 0:
+            raise IndexError("Index cannot be less than zero.")
+
+        if item > self._job_count:
+            jobs = list(take(1 + item - self._job_count, self._jobs_iter))
+            self._job_count += len(jobs)
+
+        return self._jobs[item]
 
     def get_files(self) -> list[Path]:
         files = []
@@ -127,10 +149,6 @@ class FFmpegJobFactory:
         out_path.mkdir(parents=True, exist_ok=True)
         return out_path / filename
 
-    def __iter__(self) -> Iterator[FFmpegJob]:
-        for file in self.get_files():
-            yield self.build_job(file)
-
     def build_job(self, file: Path) -> FFmpegJob:
         audio_streams: list[dict] = []
         indexed_outputs: IndexedOutputs = dict()
@@ -152,9 +170,16 @@ class FFmpegJobFactory:
                     str(output_path),
                     acodec=self.output_configuration.acodec,
                     audio_bitrate=sample_rate,
-                    overwrite_output=self.output_configuration.overwrite_existing,
-                ).global_args("-progress", "-", "-nostats")
+                )
+                if self.output_configuration.overwrite_existing:
+                    ffmpeg_output = ffmpeg.overwrite_output(ffmpeg_output)
 
-                indexed_outputs[stream_index] = ffmpeg_output
+                indexed_outputs[stream_index] = ffmpeg_output.global_args(
+                    "-progress", "-", "-nostats"
+                )
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
+
+    def build_jobs_iter(self) -> Iterator[FFmpegJob]:
+        for file in self.get_files():
+            yield self.build_job(file)

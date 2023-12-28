@@ -4,10 +4,9 @@ import rich
 from rich.traceback import install
 
 from BAET.AppArgs import GetArgs
-from BAET.Console import console
+from BAET.Console import app_console
 from BAET.FFmpegExtract import FFmpegExtractor
 from BAET.Logging import info_logger
-
 
 install(show_locals=True)
 
@@ -30,7 +29,7 @@ def main():
 
     if not files:
         path = args.input_dir.absolute()
-        console.print(f'No video files found in "[link file://{path}]{path}[/]".')
+        app_console.print(f'No video files found in "[link file://{path}]{path}[/]".')
         sys.exit(0)
 
     ex = FFmpegExtractor(args)

@@ -4,11 +4,13 @@ from rich.logging import RichHandler
 
 __ALL__ = ["info_logger"]
 
+from BAET.Console import app_console
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
     datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True)],
+    handlers=[RichHandler(rich_tracebacks=True, console=app_console)],
 )
 
 info_logger = logging.getLogger("info_logger")

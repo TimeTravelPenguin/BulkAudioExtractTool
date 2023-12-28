@@ -11,7 +11,7 @@ from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
 
-from BAET.Console import console
+from BAET.Console import app_console
 from BAET.Types import (
     AppArgs,
     AppVersion,
@@ -69,7 +69,7 @@ class AppDescription:
 
 def new_empty_argparser() -> ArgumentParser:
     def get_formatter(prog):
-        return RichHelpFormatter(prog, max_help_position=40, console=console)
+        return RichHelpFormatter(prog, max_help_position=40, console=app_console)
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
     description = AppDescription()
