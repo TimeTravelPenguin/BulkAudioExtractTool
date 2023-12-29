@@ -23,9 +23,7 @@ def main():
         rich.print(args)
         sys.exit(0)
 
-    files = [
-        file for file in args.input_dir.iterdir() if file.suffix in VIDEO_EXTENSIONS
-    ]
+    files = [file for file in args.input_dir.iterdir() if file.suffix in VIDEO_EXTENSIONS]
 
     if not files:
         path = args.input_dir.absolute()

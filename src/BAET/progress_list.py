@@ -1,30 +1,45 @@
 from rich import Console
 from rich.progress import Progress, TextColumn
 
+from BAET.progress_status import ProgressStatus
+from BAET.progress_style import ProgressStyle
+
 
 class ProgressCheckList:
     def __init__(
         self,
-        idle_description: str,
-        working_description: str,
+        waiting_description: str,
+        running_description: str,
         completed_description: str,
+        error_description: str,
+        progress_style: ProgressStyle | None = None,
         console: Console = None,
     ):
+        self.descriptions: dict[ProgressStatus, str] = {
+            ProgressStatus.Waiting: waiting_description,
+            ProgressStatus.Running: running_description,
+            ProgressStatus.Completed: completed_description,
+            ProgressStatus.Error: error_description,
+        }
+
+        self.progress_style = progress_style or ProgressStyle()
+
         self.overall_progress = Progress(
             TextColumn("{task.description}"),
             console=console,
         )
 
         self.overall_progress_task = self.overall_progress.add_task(
-            idle_description,
+            waiting_description,
             total=None,
             start=False,
         )
 
     def add_item(
         self,
-        idle_description: str,
-        working_description: str,
+        waiting_description: str,
+        running_description: str,
         completed_description: str,
+        error_description: str,
     ):
         pass

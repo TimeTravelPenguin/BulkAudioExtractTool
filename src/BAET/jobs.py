@@ -29,11 +29,7 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         probe = ffmpeg.probe(file)
 
         audio_streams = sorted(
-            [
-                stream
-                for stream in probe["streams"]
-                if "codec_type" in stream and stream["codec_type"] == "audio"
-            ],
+            [stream for stream in probe["streams"] if "codec_type" in stream and stream["codec_type"] == "audio"],
             key=lambda stream: stream["index"],
         )
 
@@ -72,11 +68,7 @@ class FFmpegJob:
 
     @classmethod
     def stream_duration_ms(cls, stream: AudioStream) -> Millisecond:
-        return (
-            1_000_000
-            * float(stream["duration_ts"])
-            * float(Fraction(stream["time_base"]))
-        )
+        return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
 
     def stream(self, index: StreamIndex) -> AudioStream:
         stream = first_true(
@@ -138,15 +130,9 @@ class FFmpegJobFactory:
         return files
 
     def create_output_filepath(self, file: Path, stream_index: int) -> Path:
-        filename = Path(
-            f"{file.stem}_track{stream_index}.{self.output_configuration.file_type}"
-        )
+        filename = Path(f"{file.stem}_track{stream_index}.{self.output_configuration.file_type}")
 
-        out_path = (
-            self.output_dir
-            if self.output_configuration.no_output_subdirs
-            else self.output_dir / file.stem
-        )
+        out_path = self.output_dir if self.output_configuration.no_output_subdirs else self.output_dir / file.stem
 
         out_path.mkdir(parents=True, exist_ok=True)
         return out_path / filename
@@ -176,9 +162,7 @@ class FFmpegJobFactory:
                 if self.output_configuration.overwrite_existing:
                     ffmpeg_output = ffmpeg.overwrite_output(ffmpeg_output)
 
-                indexed_outputs[stream_index] = ffmpeg_output.global_args(
-                    "-progress", "-", "-nostats"
-                )
+                indexed_outputs[stream_index] = ffmpeg_output.global_args("-progress", "-", "-nostats")
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
 

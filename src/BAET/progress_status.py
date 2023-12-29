@@ -19,9 +19,7 @@ class ProgressStatus(StrEnum):
     def __rich_repr__(self) -> Result:
         yield repr(self)
 
-    def __rich_console__(
-        self, console: Console, options: ConsoleOptions
-    ) -> RenderResult:
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield repr(self)
 
 

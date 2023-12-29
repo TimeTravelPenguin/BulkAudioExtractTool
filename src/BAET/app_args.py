@@ -67,9 +67,7 @@ class DebugOptions(BaseModel):
 
 
 class AppDescription(ConsoleRenderable):
-    def __rich_console__(
-        self, console: Console, options: ConsoleOptions
-    ) -> RenderResult:
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield Markdown("# Bulk Audio Extract Tool (src)")
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
@@ -317,9 +315,7 @@ def get_args() -> AppArgs:
         "--generate-help-preview",
         action=HelpPreviewAction,
         path="help-preview.svg",  # (optional) or "help-preview.html" or "help-preview.txt"
-        export_kwds={
-            "theme": DIMMED_MONOKAI
-        },  # (optional) keywords passed to console.save_... methods
+        export_kwds={"theme": DIMMED_MONOKAI},  # (optional) keywords passed to console.save_... methods
         help=argparse.SUPPRESS,
     )
 

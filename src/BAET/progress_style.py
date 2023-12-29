@@ -19,63 +19,53 @@ def parse_style(style: Style | str) -> Style:
 class ProgressStyle:
     def __init__(
         self,
-        style_dict: dict[ProgressStatusLiteral | ProgressStatus, str | Style]
-        | None = None,
+        style_dict: dict[ProgressStatusLiteral | ProgressStatus, str | Style] | None = None,
         *,
         waiting_style: str | Style | None = None,
         running_style: str | Style | None = None,
         completed_style: str | Style | None = None,
         error_style: str | Style | None = None,
-        current_status: ProgressStatusLiteral | ProgressStatus = ProgressStatus.Waiting,
     ):
         default_style_dict: dict[ProgressStatus, Style] = {
             key: parse_style(value or default)
             for key, value, default in [
-                (ProgressStatus.Waiting, waiting_style, "white"),
-                (ProgressStatus.Running, running_style, "blue"),
-                (ProgressStatus.Completed, completed_style, "green"),
-                (ProgressStatus.Error, error_style, "red"),
+                (ProgressStatus.Waiting, waiting_style, "dim bright_white"),
+                (ProgressStatus.Running, running_style, "bright_cyan"),
+                (ProgressStatus.Completed, completed_style, "bright_green"),
+                (ProgressStatus.Error, error_style, "bright_red"),
             ]
         }
 
         if style_dict is not None:
-            parsed_styles = {
-                ProgressStatus(key): parse_style(val) for key, val in style_dict.items()
-            }
+            parsed_styles = {ProgressStatus(key): parse_style(val) for key, val in style_dict.items()}
 
             default_style_dict.update(parsed_styles)
 
         self.style_dict: Mapping[ProgressStatus, Style] = default_style_dict
-        self.current_status = current_status
 
-    def __call__(self, text: str, *args, **kwargs) -> Text:
+    def __call__(
+        self,
+        text: str,
+        status: ProgressStatus | ProgressStatusLiteral,
+        style: Style | None = None,
+        *args,
+        **kwargs,
+    ) -> Text:
         text = Text(
             text=text,
-            style=self.style_dict[self.current_status],
+            style=self.style_dict[ProgressStatus(status)] + style,
             *args,
             **kwargs,
         )
 
         return text
 
-    @property
-    def current_status(self) -> ProgressStatus:
-        return self._current_status
-
-    @current_status.setter
-    def current_status(self, status: ProgressStatusLiteral | ProgressStatus):
-        self._current_status = ProgressStatus(status)
-
     def __rich_repr__(self) -> Result:
-        yield f"current_status: {self.current_status}"
         yield "style_dict", self.style_dict
 
-    def __rich_console__(
-        self, console: Console, options: ConsoleOptions
-    ) -> RenderResult:
-        out = {"current_status": self.current_status, **self.style_dict}
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         with console.capture() as capture:
-            console.print(out)
+            console.print(self.style_dict)
         yield Text.from_ansi(capture.get())
 
 
@@ -101,14 +91,14 @@ if __name__ == "__main__":
             ProgressStatus.Completed: app_theme.styles["status.completed"],
             ProgressStatus.Error: app_theme.styles["status.error"],
         },
-        current_status="Running",
     )
 
     @group()
     def apply_styles(style: ProgressStyle, message: str):
+        status: ProgressStatusLiteral
         for status in ["Waiting", "Completed", "Running", "Error"]:
             style.current_status = status
-            yield style(message.format(status))
+            yield style(message.format(status), status)
 
     @group()
     def make_style_group(style: ProgressStyle, message: str):
