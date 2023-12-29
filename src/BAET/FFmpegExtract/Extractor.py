@@ -1,11 +1,11 @@
 from collections.abc import MutableMapping
 
 import ffmpeg
-from bidict import bidict
+from bidict import MutableBidict, bidict
 from ffmpeg import Stream
 from rich.console import Group
 from rich.live import Live
-from rich.panel import Panel
+from rich.padding import Padding
 from rich.progress import (
     BarColumn,
     Progress,
@@ -22,9 +22,10 @@ from BAET.FFmpegExtract.Aliases import StreamIndex
 from BAET.FFmpegExtract.Jobs import FFmpegJob, FFmpegJobFactory
 from BAET.Logging import info_logger
 
+
 __all__ = ["FFmpegExtractor"]
 
-type StreamTaskMap = MutableMapping[StreamIndex, TaskID]
+type StreamTaskBiMap = MutableBidict[StreamIndex, TaskID]
 type JobProgressMap = MutableMapping[FFmpegJob, Progress]
 type JobTaskMap = MutableMapping[FFmpegJob, TaskID]
 type JobOutputMap = MutableMapping[FFmpegJob, Stream]
@@ -45,11 +46,11 @@ class FFmpegExtractor:
         self.jobs = list(job_factory)
 
     def run_synchronously(self):
-        progress_bars = [JobProgress(job) for job in self.jobs]
-        group = Group(*[progress_bar.display for progress_bar in progress_bars])
+        job_progresses = [JobProgress(job) for job in self.jobs]
+        group = Group(*[job_progress.display for job_progress in job_progresses])
 
         with Live(group):
-            for progress in progress_bars:
+            for progress in job_progresses:
                 # info_logger.info("Processing input file '%s'", progress.job.input_file)
                 progress.start()
 
@@ -59,9 +60,16 @@ class JobProgress:
     def __init__(self, job: FFmpegJob):
         self.job = job
 
+        bar_blue = "#5079AF"
+        bar_yellow = "#CAAF39"
+
         self.overall_progress = Progress(
             TextColumn("Progress for {task.fields[filename]}"),
-            BarColumn(),
+            BarColumn(
+                complete_style=bar_blue,
+                finished_style="green",
+                pulse_style=bar_yellow,
+            ),
             TextColumn("Completed {task.completed} of {task.total}"),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
@@ -77,14 +85,18 @@ class JobProgress:
 
         self.stream_task_progress = Progress(
             TextColumn("Audio Stream {task.fields[stream_index]}"),
-            BarColumn(),
+            BarColumn(
+                complete_style=bar_blue,
+                finished_style="green",
+                pulse_style=bar_yellow,
+            ),
             TextColumn("{task.fields[status]}"),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             console=app_console,
         )
 
-        self.stream_task_bimap: StreamTaskMap = bidict()
+        self.stream_task_bimap: StreamTaskBiMap = bidict()
 
         for stream in self.job.audio_streams:
             stream_index = stream["index"]
@@ -99,45 +111,62 @@ class JobProgress:
 
             self.stream_task_bimap[stream_index] = task
 
-        self.display = Group(
-            self.overall_progress,
-            Panel(self.stream_task_progress, title="Stream Extraction"),
-        )
-
-    def start(self):
-        self.overall_progress.start()
-        for stream_index, task in self.stream_task_bimap.items():
-            self.stream_task_progress.start_task(task)
-            self.stream_task_progress.update(task, status="Working")
-            output = self.job.indexed_outputs[stream_index]
-
-            proc = ffmpeg.run_async(
-                output,
-                pipe_stdout=True,
-                pipe_stderr=True,
+            self.display = Group(
+                self.overall_progress,
+                Padding(self.stream_task_progress, (1, 0, 2, 5)),
             )
 
-            try:
-                while proc.poll() is None:
-                    output = proc.stdout.readline().decode("utf-8").strip()
-                    if "out_time_ms" in output:
-                        val = output.split("=", 1)[1]
+        # self.display = Group(
+        #     self.overall_progress,
+        #     Padding(
+        #         Panel(
+        #             self.stream_task_progress, title="Stream Extraction", expand=False
+        #         ),
+        #         (0, 0, 1, 3),
+        #     ),
+        # )
+
+    def start(self):
+        self.overall_progress.start_task(self.overall_progress_task)
+        for task in self.stream_task_bimap.values():
+            self.stream_task_progress.start_task(task)
+            self.stream_task_progress.update(task, status="Working")
+
+            self.run_task(task)
+
+            self.stream_task_progress.update(task, status="Done")
+            self.stream_task_progress.stop_task(task)
+            self.overall_progress.update(self.overall_progress_task, advance=1)
+
+        self.overall_progress.stop_task(self.overall_progress_task)
+
+    def run_task(self, task: TaskID):
+        stream_index = self.stream_task_bimap.inverse[task]
+        output = self.job.indexed_outputs[stream_index]
+
+        proc = ffmpeg.run_async(
+            output,
+            pipe_stdout=True,
+            pipe_stderr=True,
+        )
+
+        try:
+            with proc as p:
+                for line in p.stdout:
+                    decoded = line.decode("utf-8").strip()
+                    if "out_time_ms" in decoded:
+                        val = decoded.split("=", 1)[1]
                         self.stream_task_progress.update(
                             task,
                             completed=float(val),
                         )
 
-                if proc.returncode != 0:
-                    raise RuntimeError(proc.stderr.read().decode("utf-8"))
-            except Exception as e:
-                info_logger.critical("%s: %s", type(e).__name__, e)
-                error_console.print_exception()
-                raise e
-
-            self.stream_task_progress.update(task, status="Done")
-            self.stream_task_progress.stop_task(task)
-            self.overall_progress.update(self.overall_progress_task, advance=1)
-        self.overall_progress.stop()
+            if p.returncode != 0:
+                raise RuntimeError(p.stderr.read().decode("utf-8"))
+        except Exception as e:
+            info_logger.critical("%s: %s", type(e).__name__, e)
+            error_console.print_exception()
+            raise e
 
 
 class FFmpegProgress:
