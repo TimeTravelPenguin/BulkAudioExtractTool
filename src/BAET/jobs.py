@@ -6,26 +6,26 @@ from pathlib import Path
 import ffmpeg
 from more_itertools import first_true, take
 
-from BAET.Console import error_console
-from BAET.FFmpegExtract import VIDEO_EXTENSIONS
-from BAET.FFmpegExtract.Aliases import (
+from BAET._console import error_console
+from BAET._logging import console_logger
+from ._aliases import (
     AudioStream,
     IndexedAudioStream,
     IndexedOutputs,
     Millisecond,
     StreamIndex,
 )
-from BAET.Logging import info_logger
+from ._constants import VIDEO_EXTENSIONS
+from .app_args import InputFilters, OutputConfigurationOptions
+
 
 __all__ = ["FFmpegJobFactory", "FFmpegJob"]
-
-from BAET.Types import InputFilters, OutputConfigurationOptions
 
 
 @contextlib.contextmanager
 def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
     try:
-        info_logger.info('Probing file "%s"', file)
+        console_logger.info('Probing file "%s"', file)
         probe = ffmpeg.probe(file)
 
         audio_streams = sorted(
@@ -40,11 +40,11 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         if not audio_streams:
             raise ValueError("No audio streams found")
 
-        info_logger.info("Found %d audio streams", len(audio_streams))
+        console_logger.info("Found %d audio streams", len(audio_streams))
         yield audio_streams
 
     except (ffmpeg.Error, ValueError) as e:
-        info_logger.critical("%s: %s", type(e).__name__, e)
+        console_logger.critical("%s: %s", type(e).__name__, e)
         error_console.print_exception()
         raise e
 
@@ -59,9 +59,11 @@ class FFmpegJob:
         self.input_file: Path = input_file
         self.indexed_outputs: IndexedOutputs = indexed_outputs
         self.audio_streams = audio_streams
-        self.indexed_audio_streams: IndexedAudioStream = dict()
+
+        indexed_audio_streams = dict()
         for stream in audio_streams:
-            self.indexed_audio_streams[stream["index"]] = stream
+            indexed_audio_streams[stream["index"]] = stream
+        self.indexed_audio_streams: IndexedAudioStream = indexed_audio_streams
 
         # TODO: Do we need this?
         self.durations_ms_dict: dict[StreamIndex, Millisecond] = {
@@ -151,7 +153,7 @@ class FFmpegJobFactory:
 
     def build_job(self, file: Path) -> FFmpegJob:
         audio_streams: list[dict] = []
-        indexed_outputs: IndexedOutputs = dict()
+        indexed_outputs = dict()
 
         with probe_audio_streams(file) as streams:
             for idx, stream in enumerate(streams):

@@ -1,29 +1,72 @@
 import argparse
+import re
 from argparse import ArgumentParser
 from pathlib import Path
+from re import Pattern
 
-from pydantic import DirectoryPath
-from rich.console import Console, ConsoleOptions, RenderResult
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
+from rich.console import Console, ConsoleOptions, ConsoleRenderable, RenderResult
 from rich.markdown import Markdown
 from rich.padding import Padding
 from rich.table import Table
 from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
+from typing_extensions import Annotated
 
-from BAET.Console import app_console
-from BAET.Types import (
-    AppArgs,
-    AppVersion,
-    DebugOptions,
-    InputFilters,
-    OutputConfigurationOptions,
-)
-
-APP_VERSION = AppVersion(1, 0, 0, "alpha")
+from BAET._console import app_console
+from BAET._metadata import app_version
 
 
-class AppDescription:
+file_type_pattern = re.compile(r"^\.?(\w+)$")
+
+
+class InputFilters(BaseModel):
+    include: Pattern = Field(...)
+    exclude: Pattern | None = Field(...)
+
+    @field_validator("include", mode="before")
+    @classmethod
+    def validate_include_nonempty(cls, v: str):
+        if v is None or not v.strip():
+            return re.compile(".*")
+        return re.compile(v)
+
+    @field_validator("exclude", mode="before")
+    @classmethod
+    def validate_exclude_nonempty(cls, v: str):
+        if v is None or not v.strip():
+            return None
+        return re.compile(v)
+
+
+class OutputConfigurationOptions(BaseModel):
+    output_streams_separately: bool = Field(...)
+    overwrite_existing: bool = Field(...)
+    no_output_subdirs: bool = Field(...)
+    acodec: str = Field(...)
+    fallback_sample_rate: Annotated[int, Field(gt=0)] = Field(...)
+    file_type: str = Field(...)
+
+    @field_validator("file_type", mode="before")
+    @classmethod
+    def validate_file_type(cls, v: str):
+        matched = file_type_pattern.match(v)
+        if matched:
+            return matched.group(1)
+        raise ValueError(f"Invalid file type: {v}")
+
+
+class DebugOptions(BaseModel):
+    logging: bool = Field(...)
+    dry_run: bool = Field(...)
+    trim: Annotated[int, Field(gt=0)] | None = Field(...)
+    print_args: bool = Field(...)
+    show_ffmpeg_cmd: bool = Field(...)
+    run_synchronously: bool = Field(...)
+
+
+class AppDescription(ConsoleRenderable):
     def __rich_console__(
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
@@ -42,7 +85,7 @@ class AppDescription:
             ),
             (
                 Padding(Text("Version:", justify="right"), (0, 5, 0, 0)),
-                Text(str(APP_VERSION), style="app.version", justify="left"),
+                Text(app_version(), style="app.version", justify="left"),
             ),
             (
                 Padding(Text("Author:", justify="right"), (0, 5, 0, 0)),
@@ -79,28 +122,46 @@ def new_empty_argparser() -> ArgumentParser:
     )
 
     RichHelpFormatter.highlights.append(r"(?P<help_keyword>ffmpeg|ffprobe)")
-
     RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
-    return argparse.ArgumentParser(
+    return argparse.ArgumentParser(  # type: ignore
         prog="Bulk Audio Extract Tool (src)",
-        description=description,  # type: ignore
+        description=description,
         epilog=Markdown(
             "Phillip Smith, 2023",
             justify="right",
             style="argparse.prog",
-        ),  # type: ignore
+        ),
         formatter_class=get_formatter,
     )
 
 
-def GetArgs() -> AppArgs:
+class AppArgs(BaseModel):
+    """Application commandline arguments.
+
+    Raises:
+        ValueError: The provided path is not a directory.
+
+    Returns:
+        DirectoryPath: Validated directory path.
+    """
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    input_dir: DirectoryPath = Field(...)
+    output_dir: DirectoryPath = Field(...)
+    input_filters: InputFilters = Field(...)
+    output_configuration: OutputConfigurationOptions = Field(...)
+    debug_options: DebugOptions = Field(...)
+
+
+def get_args() -> AppArgs:
     parser = new_empty_argparser()
 
     parser.add_argument(
         "--version",
         action="version",
-        version=f"[argparse.prog]%(prog)s[/] version [i]{APP_VERSION}[/]",
+        version=f"[argparse.prog]%(prog)s[/] version [i]{app_version()}[/]",
     )
 
     io_group = parser.add_argument_group(

@@ -2,9 +2,8 @@ import logging
 
 from rich.logging import RichHandler
 
-__ALL__ = ["info_logger"]
+from BAET._console import app_console
 
-from BAET.Console import app_console
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,7 +12,7 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True, console=app_console)],
 )
 
-info_logger = logging.getLogger("info_logger")
+console_logger = logging.getLogger("console_logger")
 
 
 class LevelFilter(logging.Filter):
@@ -25,4 +24,4 @@ class LevelFilter(logging.Filter):
         return record.levelno == self.loglevel
 
 
-info_logger.addFilter(LevelFilter(logging.INFO))
+# info_logger.addFilter(LevelFilter(logging.INFO))
