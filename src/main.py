@@ -30,9 +30,6 @@ def main():
         app_console.print(f'No video files found in "[link file://{path}]{path}[/]".')
         sys.exit(0)
 
-    console_logger.warn("Warn")
-    console_logger.warning("Warning")
-
     ex = FFmpegExtractor(args)
     ex.run_synchronously()
 

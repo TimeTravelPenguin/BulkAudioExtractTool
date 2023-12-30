@@ -1,13 +1,11 @@
 import contextlib
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from fractions import Fraction
 from pathlib import Path
 
 import ffmpeg
-from more_itertools import first_true, take
+from more_itertools import first_true
 
-from BAET._console import error_console
-from BAET._logging import console_logger
 from ._aliases import (
     AudioStream,
     IndexedAudioStream,
@@ -15,11 +13,10 @@ from ._aliases import (
     Millisecond,
     StreamIndex,
 )
+from ._console import error_console
 from ._constants import VIDEO_EXTENSIONS
+from ._logging import console_logger
 from .app_args import InputFilters, OutputConfigurationOptions
-
-
-__all__ = ["FFmpegJobFactory", "FFmpegJob"]
 
 
 @contextlib.contextmanager
@@ -83,7 +80,30 @@ class FFmpegJob:
         return stream
 
 
-class FFmpegJobFactory:
+class FileSourceDirectory:
+    def __init__(self, directory: Path, filters: InputFilters):
+        if not directory.is_dir():
+            raise NotADirectoryError(directory)  # FIXME: Is this right?
+
+        self._directory = directory.resolve(strict=True)
+        self._filters = filters
+
+    def __iter__(self) -> Generator[Path]:
+        for file in self._directory.iterdir():
+            if not file.is_file():
+                continue
+
+            # TODO: This should be moved. Rather than checking a global variable, it should
+            #   be provided somehow. Perhaps via command line args.
+            if file.suffix not in VIDEO_EXTENSIONS:
+                continue
+
+            if self._filters.include.match(file.name):
+                if self._filters.exclude is not None and not self._filters.exclude.match(file.name):
+                    yield file
+
+
+class MultitrackAudioDirectoryExtractorJobBuilder:
     def __init__(
         self,
         input_dir: Path,
@@ -91,48 +111,16 @@ class FFmpegJobFactory:
         filters: InputFilters,
         output_configuration: OutputConfigurationOptions,
     ):
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        self.filters = filters
-        self.output_configuration = output_configuration
-
-        self._jobs: list[FFmpegJob] = []
-        self._jobs_iter: Iterator[FFmpegJob] = self.build_jobs_iter()
-        self._job_count: int = 0
-
-    def __iter__(self) -> Iterator[FFmpegJob]:
-        for file in self.get_files():
-            yield self.build_job(file)
-
-    def __getitem__(self, item: int) -> FFmpegJob:
-        if item < 0:
-            raise IndexError("Index cannot be less than zero.")
-
-        if item > self._job_count:
-            jobs = list(take(1 + item - self._job_count, self._jobs_iter))
-            self._job_count += len(jobs)
-
-        return self._jobs[item]
-
-    def get_files(self) -> list[Path]:
-        files = []
-
-        for file in self.input_dir.iterdir():
-            if file.suffix not in VIDEO_EXTENSIONS:
-                continue
-
-            if file.is_file() and self.filters.include.match(file.name):
-                if not self.filters.exclude:
-                    files.append(file)
-                elif not self.filters.exclude.match(file.name):
-                    files.append(file)
-
-        return files
+        self._input_dir = input_dir
+        self._output_dir = output_dir
+        self._filters = filters
+        self._output_configuration = output_configuration
+        self._file_source_directory = FileSourceDirectory(input_dir, filters)
 
     def create_output_filepath(self, file: Path, stream_index: int) -> Path:
-        filename = Path(f"{file.stem}_track{stream_index}.{self.output_configuration.file_type}")
+        filename = Path(f"{file.stem}_track{stream_index}.{self._output_configuration.file_type}")
 
-        out_path = self.output_dir if self.output_configuration.no_output_subdirs else self.output_dir / file.stem
+        out_path = self._output_dir if self._output_configuration.no_output_subdirs else self._output_dir / file.stem
 
         out_path.mkdir(parents=True, exist_ok=True)
         return out_path / filename
@@ -150,22 +138,21 @@ class FFmpegJobFactory:
                 output_path = self.create_output_filepath(file, stream_index)
                 sample_rate = stream.get(
                     "sample_rate",
-                    self.output_configuration.fallback_sample_rate,
+                    self._output_configuration.fallback_sample_rate,
                 )
 
                 ffmpeg_output = ffmpeg.output(
                     ffmpeg_input[f"a:{idx}"],
                     str(output_path),
-                    acodec=self.output_configuration.acodec,
+                    acodec=self._output_configuration.acodec,
                     audio_bitrate=sample_rate,
                 )
-                if self.output_configuration.overwrite_existing:
+                if self._output_configuration.overwrite_existing:
                     ffmpeg_output = ffmpeg.overwrite_output(ffmpeg_output)
 
                 indexed_outputs[stream_index] = ffmpeg_output.global_args("-progress", "-", "-nostats")
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
 
-    def build_jobs_iter(self) -> Iterator[FFmpegJob]:
-        for file in self.get_files():
-            yield self.build_job(file)
+    def __iter__(self) -> Generator[FFmpegJob]:
+        yield from map(self.build_job, self._file_source_directory)

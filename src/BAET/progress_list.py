@@ -1,8 +1,8 @@
-from rich import Console
+from rich.console import Console
 from rich.progress import Progress, TextColumn
 
-from BAET.progress_status import ProgressStatus
-from BAET.progress_style import ProgressStyle
+from .progress_status import ProgressStatus
+from .progress_style import ProgressStyle
 
 
 class ProgressCheckList:

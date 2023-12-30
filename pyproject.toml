@@ -2,9 +2,12 @@
 name = "BAET"
 version = "0.1.0-alpha"
 description = ""
-authors = ["TimeTravelPenguins <TimeTravelPenguin@gmail.com>"]
+authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "BAET", from = "src" }]
+
+[project.urls]
+Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
 baet = "src.main:main"
@@ -27,12 +30,16 @@ asyncio = "^3.4.3"
 
 [tool.black]
 target-version = ["py312"]
+line-length = 120
 
 [tool.isort]
+atomic = true
 profile = "black"
+line_length = 120
 py_version = 312
 
 [tool.mypy]
+mypy_path = "src"
 disallow_untyped_decorators = false
 install_types = true
 python_version = "3.12"

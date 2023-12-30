@@ -1,20 +1,17 @@
 from rich.console import Group
 from rich.live import Live
 
-from BAET.app_args import AppArgs
-from BAET.jobs import FFmpegJobFactory
-
-
-__all__ = ["FFmpegExtractor"]
-
-from BAET.job_progress import FFmpegJobProgress
+from ._logging import console_logger
+from .app_args import AppArgs
+from .job_progress import FFmpegJobProgress
+from .jobs import MultitrackAudioDirectoryExtractorJobBuilder
 
 
 class FFmpegExtractor:
     def __init__(self, app_args: AppArgs):
         self.args = app_args
 
-        job_factory = FFmpegJobFactory(
+        job_factory = MultitrackAudioDirectoryExtractorJobBuilder(
             app_args.input_dir,
             app_args.output_dir,
             app_args.input_filters,
@@ -30,5 +27,5 @@ class FFmpegExtractor:
 
         with Live(group):
             for progress in job_progresses:
-                # info_logger.info("Processing input file '%s'", progress.job.input_file)
+                console_logger.info("Processing input file '%s'", progress.job.input_file)
                 progress.start()
