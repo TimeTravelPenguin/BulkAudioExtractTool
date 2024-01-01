@@ -1,8 +1,10 @@
 import contextlib
-from collections.abc import Generator, Iterator
+from collections.abc import Generator, Iterator, MutableMapping
 from pathlib import Path
+from typing import Any
 
-import ffmpeg
+import ffmpeg  # type: ignore
+from ffmpeg import Stream
 from rich.console import Console, ConsoleOptions, Group, RenderResult
 from rich.padding import Padding
 from rich.table import Table
@@ -14,7 +16,6 @@ from ._logging import create_logger
 from .app_args import AppArgs, InputFilters, OutputConfigurationOptions
 from .job_progress import FFmpegJobProgress
 from .jobs import FFmpegJob
-
 
 logger = create_logger()
 
@@ -50,7 +51,7 @@ class FileSourceDirectory:
         self._directory = directory.resolve(strict=True)
         self._filters = filters
 
-    def __iter__(self) -> Generator[Path]:
+    def __iter__(self) -> Generator[Path, Any, None]:
         for file in self._directory.iterdir():
             if not file.is_file():
                 continue
@@ -91,8 +92,8 @@ class MultitrackAudioBulkExtractorJobs:
         return out_path / filename
 
     def build_job(self, file: Path) -> FFmpegJob:
-        audio_streams: list[dict] = []
-        indexed_outputs = dict()
+        audio_streams: list[AudioStream] = []
+        indexed_outputs: MutableMapping[int, Stream] = dict()
 
         with probe_audio_streams(file) as streams:
             for idx, stream in enumerate(streams):
@@ -120,7 +121,7 @@ class MultitrackAudioBulkExtractorJobs:
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
 
-    def __iter__(self) -> Generator[FFmpegJob]:
+    def __iter__(self) -> Generator[FFmpegJob, Any, None]:
         yield from map(self.build_job, self._file_source_directory)
 
 

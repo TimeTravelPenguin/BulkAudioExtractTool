@@ -3,13 +3,7 @@ from pathlib import Path
 
 from more_itertools import first_true
 
-from ._aliases import (
-    AudioStream,
-    IndexedAudioStream,
-    IndexedOutputs,
-    Millisecond,
-    StreamIndex,
-)
+from ._aliases import AudioStream, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
 
 
 class FFmpegJob:

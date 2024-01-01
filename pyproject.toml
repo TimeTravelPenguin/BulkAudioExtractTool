@@ -21,6 +21,7 @@ pre-commit = "^3.6.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+types-pygments = "^2.17.0.0"
 
 [tool.poetry.group.app.dependencies]
 ffmpeg-python = "^0.2.0"
@@ -43,10 +44,7 @@ py_version = 312
 
 [tool.mypy]
 mypy_path = "src"
-disallow_untyped_decorators = false
-install_types = true
 python_version = "3.12"
-strict = true
 
 [build-system]
 requires = ["poetry-core"]

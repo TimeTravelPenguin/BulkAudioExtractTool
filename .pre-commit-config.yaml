@@ -1,5 +1,11 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_language_version:
+  python: python3.12
+
+files: "src"
+fail_fast: false
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -9,7 +15,6 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
       - id: debug-statements
-        language_version: python3
 
   - repo: https://github.com/floatingpurr/sync_with_poetry
     rev: 1.1.0
@@ -21,15 +26,13 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
-        args:
-          - --profile black
+        args: [ "--profile", "black" ]
 
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
       - id: black
-        args:
-          - --safe
+        args: [ --safe ]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0

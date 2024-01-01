@@ -1,21 +1,13 @@
-import ffmpeg
-from bidict import bidict
+import ffmpeg  # type: ignore
+from bidict import MutableBidirectionalMapping, bidict
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, Group, RenderResult
 from rich.padding import Padding
-from rich.progress import (
-    BarColumn,
-    Progress,
-    TaskID,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
+from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
 from ._aliases import StreamTaskBiMap
 from ._console import app_console, error_console
 from ._logging import create_logger
 from .jobs import FFmpegJob
-
 
 logger = create_logger()
 
@@ -63,7 +55,7 @@ class FFmpegJobProgress(ConsoleRenderable):
 
         self._stream_task_bimap: StreamTaskBiMap = bidict()
 
-        stream_task_bimap = bidict()
+        stream_task_bimap: MutableBidirectionalMapping[int, TaskID] = bidict()
         for stream in self.job.audio_streams:
             stream_index = stream["index"]
 
@@ -85,7 +77,7 @@ class FFmpegJobProgress(ConsoleRenderable):
             Padding(self._stream_task_progress, (1, 0, 1, 5)),
         )
 
-    def _run_task(self, task: TaskID):
+    def _run_task(self, task: TaskID) -> None:
         stream_index = self._stream_task_bimap.inverse[task]
 
         logger.info(f"Extracting audio stream {stream_index} of {self.job.input_file.name}")
@@ -116,7 +108,7 @@ class FFmpegJobProgress(ConsoleRenderable):
             error_console.print_exception()
             raise e
 
-    def start(self):
+    def start(self) -> None:
         self._overall_progress.start_task(self._overall_progress_task)
         for task in self._stream_task_bimap.values():
             self._stream_task_progress.start_task(task)

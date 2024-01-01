@@ -13,7 +13,7 @@ class ProgressCheckList:
         completed_description: str,
         error_description: str,
         progress_style: ProgressStyle | None = None,
-        console: Console = None,
+        console: Console | None = None,
     ):
         self.descriptions: dict[ProgressStatus, str] = {
             ProgressStatus.Waiting: waiting_description,
@@ -41,5 +41,6 @@ class ProgressCheckList:
         running_description: str,
         completed_description: str,
         error_description: str,
-    ):
+    ) -> None:
+        # TODO
         pass

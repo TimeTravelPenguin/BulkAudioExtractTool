@@ -5,18 +5,16 @@ import rich
 from rich.live import Live
 from rich.traceback import install
 
-from BAET import app_console
-from BAET._logging import create_logger
+from BAET import app_console, create_logger
 from BAET.app_args import get_args
 from BAET.extract import MultiTrackAudioBulkExtractor
-
 
 install(show_locals=True)
 
 VIDEO_EXTENSIONS = [".mp4", ".mkv"]
 
 
-def main():
+def main() -> None:
     args = get_args()
 
     if args.debug_options.print_args:

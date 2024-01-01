@@ -5,7 +5,7 @@ from pathlib import Path
 from re import Pattern
 
 from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
-from rich.console import Console, ConsoleOptions, ConsoleRenderable, RenderResult
+from rich.console import Console, ConsoleOptions, RenderResult
 from rich.markdown import Markdown
 from rich.padding import Padding
 from rich.table import Table
@@ -17,24 +17,23 @@ from typing_extensions import Annotated
 from BAET._console import app_console
 from BAET._metadata import app_version
 
-
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
 class InputFilters(BaseModel):
-    include: Pattern = Field(...)
-    exclude: Pattern | None = Field(...)
+    include: Pattern[str] = Field(...)
+    exclude: Pattern[str] | None = Field(...)
 
     @field_validator("include", mode="before")
     @classmethod
-    def validate_include_nonempty(cls, v: str):
+    def validate_include_nonempty(cls, v: str) -> Pattern[str]:
         if v is None or not v.strip():
             return re.compile(".*")
         return re.compile(v)
 
     @field_validator("exclude", mode="before")
     @classmethod
-    def validate_exclude_nonempty(cls, v: str):
+    def validate_exclude_nonempty(cls, v: str) -> Pattern[str] | None:
         if v is None or not v.strip():
             return None
         return re.compile(v)
@@ -50,7 +49,7 @@ class OutputConfigurationOptions(BaseModel):
 
     @field_validator("file_type", mode="before")
     @classmethod
-    def validate_file_type(cls, v: str):
+    def validate_file_type(cls, v: str) -> str:
         matched = file_type_pattern.match(v)
         if matched:
             return matched.group(1)
@@ -66,8 +65,9 @@ class DebugOptions(BaseModel):
     run_synchronously: bool = Field(...)
 
 
-class AppDescription(ConsoleRenderable):
-    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+class AppDescription:
+    @staticmethod
+    def __rich_console__(console: Console, options: ConsoleOptions) -> RenderResult:
         yield Markdown("# Bulk Audio Extract Tool (src)")
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
@@ -109,7 +109,7 @@ class AppDescription(ConsoleRenderable):
 
 
 def new_empty_argparser() -> ArgumentParser:
-    def get_formatter(prog):
+    def get_formatter(prog: str) -> RichHelpFormatter:
         return RichHelpFormatter(prog, max_help_position=40, console=app_console)
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
@@ -122,10 +122,10 @@ def new_empty_argparser() -> ArgumentParser:
     RichHelpFormatter.highlights.append(r"(?P<help_keyword>ffmpeg|ffprobe)")
     RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
-    return argparse.ArgumentParser(  # type: ignore
+    return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (src)",
-        description=description,
-        epilog=Markdown(
+        description=description,  # type: ignore
+        epilog=Markdown(  # type: ignore
             "Phillip Smith, 2023",
             justify="right",
             style="argparse.prog",

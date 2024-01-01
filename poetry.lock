@@ -704,6 +704,43 @@ files = [
 ]
 
 [[package]]
+name = "types-docutils"
+version = "0.20.0.3"
+description = "Typing stubs for docutils"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-docutils-0.20.0.3.tar.gz", hash = "sha256:4928e790f42b99d5833990f99c8dd9fa9f16825f6ed30380ca981846d36870cd"},
+    {file = "types_docutils-0.20.0.3-py3-none-any.whl", hash = "sha256:a930150d8e01a9170f9bca489f46808ddebccdd8bc1e47c07968a77e49fb9321"},
+]
+
+[[package]]
+name = "types-pygments"
+version = "2.17.0.0"
+description = "Typing stubs for Pygments"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "types-Pygments-2.17.0.0.tar.gz", hash = "sha256:4241c5f1b7448e559cd820143a564cf10de626a95ab10e2daa463449d16864e7"},
+    {file = "types_Pygments-2.17.0.0-py3-none-any.whl", hash = "sha256:83c33c89037f433fd5315b1abf80f5cb8b589b2d0549444d7f63824c628142c7"},
+]
+
+[package.dependencies]
+types-docutils = "*"
+types-setuptools = "*"
+
+[[package]]
+name = "types-setuptools"
+version = "69.0.0.0"
+description = "Typing stubs for setuptools"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "types-setuptools-69.0.0.0.tar.gz", hash = "sha256:b0a06219f628c6527b2f8ce770a4f47550e00d3e8c3ad83e2dc31bc6e6eda95d"},
+    {file = "types_setuptools-69.0.0.0-py3-none-any.whl", hash = "sha256:8c86195bae2ad81e6dea900a570fe9d64a59dbce2b11cc63c046b03246ea77bf"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.9.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -737,4 +774,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d1a208fb123f8ccfc3ce5a06084ca3621176188e29ad1a3103a689a8a9344f67"
+content-hash = "d8abf91013c5e3421c137c6336b5214adb7c6b445a2948f1b829eadbc1958b54"

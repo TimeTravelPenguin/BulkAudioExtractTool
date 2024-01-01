@@ -1,4 +1,5 @@
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
+from typing import Any
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.repr import Result
@@ -48,17 +49,15 @@ class ProgressStyle:
         text: str,
         status: ProgressStatus | ProgressStatusLiteral,
         style: Style | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> Text:
-        text = Text(
-            text=text,
-            style=self.style_dict[ProgressStatus(status)] + style,
+        return Text(
+            text,
+            self.style_dict[ProgressStatus(status)] + style,
             *args,
             **kwargs,
         )
-
-        return text
 
     def __rich_repr__(self) -> Result:
         yield "style_dict", self.style_dict
@@ -70,11 +69,11 @@ class ProgressStyle:
 
 
 if __name__ == "__main__":
-    from rich.console import Group, group, Console
+    from rich.console import Console, Group, group
+    from rich.padding import Padding
+    from rich.panel import Panel
     from rich.pretty import pprint
     from rich.text import Text
-    from rich.panel import Panel
-    from rich.padding import Padding
 
     console = Console(theme=app_theme)
 
@@ -94,17 +93,15 @@ if __name__ == "__main__":
     )
 
     @group()
-    def apply_styles(style: ProgressStyle, message: str):
-        status: ProgressStatusLiteral
+    def apply_styles(style: ProgressStyle, message: str) -> Generator[Text, Any, None]:
         for status in ["Waiting", "Completed", "Running", "Error"]:
-            style.current_status = status
-            yield style(message.format(status), status)
+            yield style(message.format(status), status)  # type: ignore
 
     @group()
-    def make_style_group(style: ProgressStyle, message: str):
+    def make_style_group(style: ProgressStyle, message: str) -> Generator[Text, Any, None]:
         with console.capture() as pretty_capture:
             pprint(
-                {key.value: val.color.name for key, val in style.style_dict.items()},
+                {key.value: val.color.name for key, val in style.style_dict.items() if val.color},
                 console=console,
                 expand_all=True,
                 indent_guides=False,
