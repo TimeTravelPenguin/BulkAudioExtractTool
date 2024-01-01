@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from bidict import BidirectionalMapping
-from ffmpeg import Stream  # type: ignore
+from ffmpeg import Stream
 from rich.progress import TaskID
 
 # Numbers

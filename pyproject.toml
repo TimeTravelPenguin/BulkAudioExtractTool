@@ -18,10 +18,10 @@ isort = "*"
 mypy = "*"
 pylint = "*"
 pre-commit = "^3.6.0"
+types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-types-pygments = "^2.17.0.0"
 
 [tool.poetry.group.app.dependencies]
 ffmpeg-python = "^0.2.0"

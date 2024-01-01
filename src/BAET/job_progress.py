@@ -1,4 +1,4 @@
-import ffmpeg  # type: ignore
+import ffmpeg
 from bidict import MutableBidirectionalMapping, bidict
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, Group, RenderResult
 from rich.padding import Padding

@@ -3,7 +3,7 @@ from collections.abc import Generator, Iterator, MutableMapping
 from pathlib import Path
 from typing import Any
 
-import ffmpeg  # type: ignore
+import ffmpeg
 from ffmpeg import Stream
 from rich.console import Console, ConsoleOptions, Group, RenderResult
 from rich.padding import Padding
