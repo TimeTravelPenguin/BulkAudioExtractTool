@@ -1,8 +1,10 @@
 import argparse
+import re
 from argparse import ArgumentParser
 from pathlib import Path
+from re import Pattern
 
-from pydantic import DirectoryPath
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.markdown import Markdown
 from rich.padding import Padding
@@ -10,24 +12,62 @@ from rich.table import Table
 from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
+from typing_extensions import Annotated
 
-from BAET.Console import console
-from BAET.Types import (
-    AppArgs,
-    AppVersion,
-    DebugOptions,
-    InputFilters,
-    OutputConfigurationOptions,
-)
+from BAET._console import app_console
+from BAET._metadata import app_version
+
+file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
-APP_VERSION = AppVersion(1, 0, 0, "alpha")
+class InputFilters(BaseModel):
+    include: Pattern[str] = Field(...)
+    exclude: Pattern[str] | None = Field(...)
+
+    @field_validator("include", mode="before")
+    @classmethod
+    def validate_include_nonempty(cls, v: str) -> Pattern[str]:
+        if v is None or not v.strip():
+            return re.compile(".*")
+        return re.compile(v)
+
+    @field_validator("exclude", mode="before")
+    @classmethod
+    def validate_exclude_nonempty(cls, v: str) -> Pattern[str] | None:
+        if v is None or not v.strip():
+            return None
+        return re.compile(v)
+
+
+class OutputConfigurationOptions(BaseModel):
+    output_streams_separately: bool = Field(...)
+    overwrite_existing: bool = Field(...)
+    no_output_subdirs: bool = Field(...)
+    acodec: str = Field(...)
+    fallback_sample_rate: Annotated[int, Field(gt=0)] = Field(...)
+    file_type: str = Field(...)
+
+    @field_validator("file_type", mode="before")
+    @classmethod
+    def validate_file_type(cls, v: str) -> str:
+        matched = file_type_pattern.match(v)
+        if matched:
+            return matched.group(1)
+        raise ValueError(f"Invalid file type: {v}")
+
+
+class DebugOptions(BaseModel):
+    logging: bool = Field(...)
+    dry_run: bool = Field(...)
+    trim: Annotated[int, Field(gt=0)] | None = Field(...)
+    print_args: bool = Field(...)
+    show_ffmpeg_cmd: bool = Field(...)
+    run_synchronously: bool = Field(...)
 
 
 class AppDescription:
-    def __rich_console__(
-        self, console: Console, options: ConsoleOptions
-    ) -> RenderResult:
+    @staticmethod
+    def __rich_console__(console: Console, options: ConsoleOptions) -> RenderResult:
         yield Markdown("# Bulk Audio Extract Tool (src)")
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
@@ -43,7 +83,7 @@ class AppDescription:
             ),
             (
                 Padding(Text("Version:", justify="right"), (0, 5, 0, 0)),
-                Text(str(APP_VERSION), style="app.version", justify="left"),
+                Text(app_version(), style="app.version", justify="left"),
             ),
             (
                 Padding(Text("Author:", justify="right"), (0, 5, 0, 0)),
@@ -69,8 +109,8 @@ class AppDescription:
 
 
 def new_empty_argparser() -> ArgumentParser:
-    def get_formatter(prog):
-        return RichHelpFormatter(prog, max_help_position=35, console=console)
+    def get_formatter(prog: str) -> RichHelpFormatter:
+        return RichHelpFormatter(prog, max_help_position=40, console=app_console)
 
     # todo: use console protocol https://rich.readthedocs.io/en/stable/protocol.html#console-protocol
     description = AppDescription()
@@ -80,28 +120,46 @@ def new_empty_argparser() -> ArgumentParser:
     )
 
     RichHelpFormatter.highlights.append(r"(?P<help_keyword>ffmpeg|ffprobe)")
-
     RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
     return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (src)",
         description=description,  # type: ignore
-        epilog=Markdown(
+        epilog=Markdown(  # type: ignore
             "Phillip Smith, 2023",
             justify="right",
             style="argparse.prog",
-        ),  # type: ignore
+        ),
         formatter_class=get_formatter,
     )
 
 
-def GetArgs() -> AppArgs:
+class AppArgs(BaseModel):
+    """Application commandline arguments.
+
+    Raises:
+        ValueError: The provided path is not a directory.
+
+    Returns:
+        DirectoryPath: Validated directory path.
+    """
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    input_dir: DirectoryPath = Field(...)
+    output_dir: DirectoryPath = Field(...)
+    input_filters: InputFilters = Field(...)
+    output_configuration: OutputConfigurationOptions = Field(...)
+    debug_options: DebugOptions = Field(...)
+
+
+def get_args() -> AppArgs:
     parser = new_empty_argparser()
 
     parser.add_argument(
         "--version",
         action="version",
-        version=f"[argparse.prog]%(prog)s[/] version [i]{APP_VERSION}[/]",
+        version=f"[argparse.prog]%(prog)s[/] version [i]{app_version()}[/]",
     )
 
     io_group = parser.add_argument_group(
@@ -155,6 +213,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--output-streams-separately",
+        "--sep",
         default=False,
         action="store_true",
         help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, "
@@ -165,6 +224,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--overwrite-existing",
+        "--overwrite",
         default=False,
         action="store_true",
         help="Overwrite a file if it already exists. (Default: False)",
@@ -172,7 +232,7 @@ def GetArgs() -> AppArgs:
 
     output_group.add_argument(
         "--no-output-subdirs",
-        default=True,
+        default=False,
         action="store_true",
         help="Do not create subdirectories for each video's extracted audio tracks in the output directory. "
         "(Default: True)",
@@ -205,6 +265,16 @@ def GetArgs() -> AppArgs:
     )
 
     debug_group.add_argument(
+        "--run-synchronously",
+        "--sync",
+        default=False,
+        action="store_true",
+        help="[TODO] Run each each job in order. This should reduce the CPU workload, but may increase runtime. A "
+        "'job' is per file input, regardless of whether ffmpeg commands are merged (see: "
+        "`--output-streams-separately`). (Default: False)",
+    )
+
+    debug_group.add_argument(
         "--logging",
         default=False,
         action="store_true",
@@ -227,6 +297,7 @@ def GetArgs() -> AppArgs:
 
     debug_group.add_argument(
         "--show-ffmpeg-cmd",
+        "--cmds",
         default=False,
         action="store_true",
         help="[TODO] Print to the console the generated ffmpeg command. (Default: False)",
@@ -244,9 +315,7 @@ def GetArgs() -> AppArgs:
         "--generate-help-preview",
         action=HelpPreviewAction,
         path="help-preview.svg",  # (optional) or "help-preview.html" or "help-preview.txt"
-        export_kwds={
-            "theme": DIMMED_MONOKAI
-        },  # (optional) keywords passed to console.save_... methods
+        export_kwds={"theme": DIMMED_MONOKAI},  # (optional) keywords passed to console.save_... methods
         help=argparse.SUPPRESS,
     )
 
@@ -269,6 +338,7 @@ def GetArgs() -> AppArgs:
         trim=args.trim,
         print_args=args.print_args,
         show_ffmpeg_cmd=args.show_ffmpeg_cmd,
+        run_synchronously=args.run_synchronously,
     )
 
     app_args = AppArgs.model_validate(

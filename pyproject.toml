@@ -1,39 +1,50 @@
 [tool.poetry]
 name = "BAET"
-version = "1.0.0-alpha"
+version = "0.1.1-alpha"
 description = ""
-authors = ["TimeTravelPenguins <TimeTravelPenguin@gmail.com>"]
+authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
-packages = [{include = "BAET", from = "src"}]
+packages = [{ include = "BAET", from = "src" }, { include = "app", from = "src" }]
+
+[project.urls]
+Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
-baet = "src.main:main"
+baet = "app.main:main"
 
 [tool.poetry.dev-dependencies]
-black            = "*"
-isort            = "*"
-mypy             = "*"
-pylint           = "*"
+black = "*"
+isort = "*"
+mypy = "*"
+pylint = "*"
+pre-commit = "^3.6.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+types-pygments = "^2.17.0.0"
+
+[tool.poetry.group.app.dependencies]
 ffmpeg-python = "^0.2.0"
 pydantic = "^2.5.2"
 rich = "^13.7.0"
 rich-argparse = "^1.4.0"
+more-itertools = "^10.1.0"
+bidict = "^0.22.1"
+asyncio = "^3.4.3"
 
 [tool.black]
 target-version = ["py312"]
+line-length = 120
 
 [tool.isort]
-profile    = "black"
+atomic = true
+profile = "black"
+line_length = 120
 py_version = 312
 
 [tool.mypy]
-disallow_untyped_decorators = false
-install_types  = true
+mypy_path = "src"
 python_version = "3.12"
-strict         = true
 
 [build-system]
 requires = ["poetry-core"]
