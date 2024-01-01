@@ -17,9 +17,12 @@ black = "*"
 isort = "*"
 mypy = "*"
 pylint = "*"
+pre-commit = "^3.6.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+
+[tool.poetry.group.app.dependencies]
 ffmpeg-python = "^0.2.0"
 pydantic = "^2.5.2"
 rich = "^13.7.0"
