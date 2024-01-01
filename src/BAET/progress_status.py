@@ -6,7 +6,6 @@ from typing import Literal
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.repr import Result
 
-
 type ProgressStatusLiteral = Literal["Waiting", "Running", "Completed", "Error"]
 
 

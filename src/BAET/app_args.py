@@ -125,7 +125,7 @@ def new_empty_argparser() -> ArgumentParser:
     return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (src)",
         description=description,  # type: ignore
-        epilog=Markdown(  # type: ignore
+        epilog=Markdown(
             "Phillip Smith, 2023",
             justify="right",
             style="argparse.prog",
@@ -341,7 +341,7 @@ def get_args() -> AppArgs:
         run_synchronously=args.run_synchronously,
     )
 
-    app_args = AppArgs.model_validate(
+    app_args: AppArgs = AppArgs.model_validate(
         {
             "input_dir": args.input_dir.expanduser(),
             "output_dir": args.output_dir or args.input_dir.expanduser(),
