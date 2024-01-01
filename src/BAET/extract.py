@@ -4,6 +4,8 @@ from pathlib import Path
 
 import ffmpeg
 from rich.console import Console, ConsoleOptions, Group, RenderResult
+from rich.padding import Padding
+from rich.table import Table
 
 from ._aliases import AudioStream
 from ._console import error_console
@@ -123,7 +125,7 @@ class MultitrackAudioBulkExtractorJobs:
 
 
 class MultiTrackAudioBulkExtractor:
-    def __init__(self, app_args: AppArgs):
+    def __init__(self, app_args: AppArgs) -> None:
         self._extractor_jobs = MultitrackAudioBulkExtractorJobs(
             app_args.input_dir,
             app_args.output_dir,
@@ -131,15 +133,16 @@ class MultiTrackAudioBulkExtractor:
             app_args.output_configuration,
         )
 
-        self.display = Group()
+        self.display = Table.grid()
+        self._logger = logger
 
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield self.display
 
-    def run_synchronously(self):
+    def run_synchronously(self) -> None:
         job_progresses = [FFmpegJobProgress(job) for job in self._extractor_jobs]
-        self.display = Group(*job_progresses)
+        self.display.add_row(Padding(Group(*job_progresses), pad=(1, 2)))
 
         for progress in job_progresses:
-            logger.info("Processing input file '%s'", progress.job.input_file)
+            self._logger.info(f"Processing input file '{progress.job.input_file}'")
             progress.start()

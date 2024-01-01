@@ -12,7 +12,7 @@ from rich.progress import (
 )
 
 from ._aliases import StreamTaskBiMap
-from ._console import error_console
+from ._console import app_console, error_console
 from ._logging import create_logger
 from .jobs import FFmpegJob
 
@@ -38,6 +38,7 @@ class FFmpegJobProgress(ConsoleRenderable):
             TextColumn("Completed {task.completed} of {task.total}"),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
+            console=app_console,
         )
 
         self._overall_progress_task = self._overall_progress.add_task(
@@ -57,6 +58,7 @@ class FFmpegJobProgress(ConsoleRenderable):
             TextColumn("{task.fields[status]}"),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
+            console=app_console,
         )
 
         self._stream_task_bimap: StreamTaskBiMap = bidict()
@@ -80,7 +82,7 @@ class FFmpegJobProgress(ConsoleRenderable):
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield Group(
             self._overall_progress,
-            Padding(self._stream_task_progress, (1, 0, 2, 5)),
+            Padding(self._stream_task_progress, (1, 0, 1, 5)),
         )
 
     def _run_task(self, task: TaskID):
@@ -124,6 +126,6 @@ class FFmpegJobProgress(ConsoleRenderable):
 
             self._stream_task_progress.update(task, status="Done")
             self._stream_task_progress.stop_task(task)
-            self._overall_progress.update(self._overall_progress_task, advance=1)
+            self._overall_progress.advance(self._overall_progress_task, advance=1)
 
         self._overall_progress.stop_task(self._overall_progress_task)

@@ -1,12 +1,12 @@
+import logging
 import sys
 
 import rich
-from rich.console import Group
 from rich.live import Live
 from rich.traceback import install
 
 from BAET import app_console
-from BAET._logging import ConsoleLogDisplay
+from BAET._logging import create_logger
 from BAET.app_args import get_args
 from BAET.extract import MultiTrackAudioBulkExtractor
 
@@ -23,18 +23,16 @@ def main():
         rich.print(args)
         sys.exit(0)
 
-    log_display = ConsoleLogDisplay()
-    if args.debug_options.logging:
-        log_display.enabled = True
+    if not args.debug_options.logging:
+        logging.disable(logging.CRITICAL)
 
-    with log_display as logger:
-        logger.info("Building extractor jobs")
-        ex = MultiTrackAudioBulkExtractor(args)
+    logger = create_logger()
+    logger.info("Building extractor jobs")
+    extractor = MultiTrackAudioBulkExtractor(args)
 
-        group = Group(log_display, ex)
-        with Live(group, refresh_per_second=10, console=app_console) as live:
-            logger.info("Running jobs")
-            ex.run_synchronously()
+    with Live(extractor, console=app_console):
+        logger.info("Running jobs")
+        extractor.run_synchronously()
 
     sys.exit(0)
 
