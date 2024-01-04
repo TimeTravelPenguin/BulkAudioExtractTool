@@ -61,6 +61,10 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction
 
+      - name: Check format with Black
+        run: |
+          poetry run black --check .
+
       - name: Typecheck with mypy
         run: |
           poetry run mypy
@@ -68,4 +72,4 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest --version
+          poetry run pytest
