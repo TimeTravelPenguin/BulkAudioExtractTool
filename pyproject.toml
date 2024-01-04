@@ -16,21 +16,20 @@ baet = "app.main:main"
 black = "*"
 isort = "*"
 mypy = "*"
-pylint = "*"
 pre-commit = "^3.6.0"
+pylint = "*"
+pytest = "^7.4.4"
 types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-
-[tool.poetry.group.app.dependencies]
+asyncio = "^3.4.3"
+bidict = "^0.22.1"
 ffmpeg-python = "^0.2.0"
+more-itertools = "^10.1.0"
 pydantic = "^2.5.2"
 rich = "^13.7.0"
 rich-argparse = "^1.4.0"
-more-itertools = "^10.1.0"
-bidict = "^0.22.1"
-asyncio = "^3.4.3"
 
 [tool.black]
 target-version = ["py312"]
