@@ -5,6 +5,17 @@ description = ""
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "BAET", from = "src" }]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
 
 [project.urls]
 Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
@@ -22,7 +33,7 @@ pytest = "^7.4.4"
 types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.9"
 asyncio = "^3.4.3"
 bidict = "^0.22.1"
 ffmpeg-python = "^0.2.0"
@@ -32,18 +43,17 @@ rich = "^13.7.0"
 rich-argparse = "^1.4.0"
 
 [tool.black]
-target-version = ["py312"]
 line-length = 120
 
 [tool.isort]
-atomic = true
 profile = "black"
 line_length = 120
-py_version = 312
 
 [tool.mypy]
 mypy_path = "src"
-python_version = "3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.poetry-dynamic-versioning]
 enable = true

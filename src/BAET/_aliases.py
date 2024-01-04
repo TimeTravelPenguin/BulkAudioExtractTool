@@ -1,18 +1,19 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypeAlias, Union
 
 from bidict import BidirectionalMapping
 from ffmpeg import Stream
 from rich.progress import TaskID
 
+
 # Numbers
-type Millisecond = int | float
+Millisecond: TypeAlias = Union[int, float]
 
 # FFmpeg
-type StreamIndex = int
-type AudioStream = dict[str, Any]
+StreamIndex: TypeAlias = int
+AudioStream: TypeAlias = dict[str, Any]
 
 # Mappings
-type IndexedOutputs = Mapping[StreamIndex, Stream]
-type IndexedAudioStream = Mapping[StreamIndex, AudioStream]
-type StreamTaskBiMap = BidirectionalMapping[StreamIndex, TaskID]
+IndexedOutputs: TypeAlias = Mapping[StreamIndex, Stream]
+IndexedAudioStream: TypeAlias = Mapping[StreamIndex, AudioStream]
+StreamTaskBiMap: TypeAlias = BidirectionalMapping[StreamIndex, TaskID]

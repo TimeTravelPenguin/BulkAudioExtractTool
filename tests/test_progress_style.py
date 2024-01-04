@@ -5,7 +5,7 @@ from BAET.progress_status import ProgressStatusLiteral
 from BAET.progress_style import ProgressStyle
 
 
-def test_call_applies_style():
+def test_call_applies_style() -> None:
     waiting_style: dict[ProgressStatusLiteral, str] = {"Running": "blue"}
     input_str = "test message"
     style = ProgressStyle(waiting_style)
