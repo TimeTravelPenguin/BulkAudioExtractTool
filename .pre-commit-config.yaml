@@ -65,6 +65,6 @@ repos:
       - id: poetry-check
       - id: poetry-lock
       - id: poetry-export
-        args: [ "--only", "app", "-f", "requirements.txt", "-o", "requirements.txt" ]
+        args: [ "--without", "dev", "-f", "requirements.txt", "-o", "requirements.txt" ]
         verbose: true
       - id: poetry-install

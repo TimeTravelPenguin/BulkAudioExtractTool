@@ -1,13 +1,12 @@
 from collections.abc import Mapping
-from typing import Any, TypeAlias, Union
+from typing import Any, TypeAlias
 
 from bidict import BidirectionalMapping
 from ffmpeg import Stream
 from rich.progress import TaskID
 
-
 # Numbers
-Millisecond: TypeAlias = Union[int, float]
+Millisecond: TypeAlias = int | float
 
 # FFmpeg
 StreamIndex: TypeAlias = int

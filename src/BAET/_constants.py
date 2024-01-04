@@ -1,6 +1,6 @@
-from typing import Final, LiteralString, Sequence
+from typing import Final, LiteralString, Sequence, TypeAlias
 
-type VideoExtension = Final[LiteralString]
+VideoExtension: TypeAlias = Final[LiteralString]
 
 EXT_MP4: VideoExtension = ".mp4"
 EXT_MKV: VideoExtension = ".mp4"

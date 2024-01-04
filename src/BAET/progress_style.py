@@ -7,7 +7,7 @@ from rich.style import Style
 from rich.text import Text
 
 from BAET._theme import app_theme
-from BAET.progress_status import ProgressStatus, ProgressStatusLiteral
+from BAET.progress_status import ProgressStatus, ProgressStatusLiteral, ProgressStatusType
 
 
 def parse_style(style: Style | str) -> Style:
@@ -20,7 +20,7 @@ def parse_style(style: Style | str) -> Style:
 class ProgressStyle:
     def __init__(
         self,
-        style_dict: dict[ProgressStatusLiteral | ProgressStatus, str | Style] | None = None,
+        style_dict: dict[ProgressStatusType, str | Style] | None = None,
         *,
         waiting_style: str | Style | None = None,
         running_style: str | Style | None = None,
@@ -48,8 +48,8 @@ class ProgressStyle:
         self,
         text: str,
         status: ProgressStatus | ProgressStatusLiteral,
-        style: Style | None = None,
         *args: Any,
+        style: Style | None = None,
         **kwargs: Any,
     ) -> Text:
         return Text(
@@ -69,11 +69,10 @@ class ProgressStyle:
 
 
 if __name__ == "__main__":
-    from rich.console import Console, Group, group
+    from rich.console import Group, group
     from rich.padding import Padding
     from rich.panel import Panel
     from rich.pretty import pprint
-    from rich.text import Text
 
     console = Console(theme=app_theme)
 
