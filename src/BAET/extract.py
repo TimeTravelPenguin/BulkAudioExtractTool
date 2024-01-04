@@ -93,7 +93,7 @@ class MultitrackAudioBulkExtractorJobs:
 
     def build_job(self, file: Path) -> FFmpegJob:
         audio_streams: list[AudioStream] = []
-        indexed_outputs: MutableMapping[int, Stream] = dict()
+        indexed_outputs: MutableMapping[int, Stream] = {}
 
         with probe_audio_streams(file) as streams:
             for idx, stream in enumerate(streams):

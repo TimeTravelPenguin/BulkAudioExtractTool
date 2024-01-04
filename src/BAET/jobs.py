@@ -17,7 +17,7 @@ class FFmpegJob:
         self.indexed_outputs: IndexedOutputs = indexed_outputs
         self.audio_streams = audio_streams
 
-        indexed_audio_streams = dict()
+        indexed_audio_streams = {}
         for stream in audio_streams:
             indexed_audio_streams[stream["index"]] = stream
         self.indexed_audio_streams: IndexedAudioStream = indexed_audio_streams
@@ -32,7 +32,7 @@ class FFmpegJob:
         return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
 
     def stream(self, index: StreamIndex) -> AudioStream:
-        stream: AudioStream = first_true(
+        stream: AudioStream | None = first_true(
             self.audio_streams,
             default=None,
             pred=lambda st: st["index"] == index,
