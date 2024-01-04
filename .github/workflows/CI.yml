@@ -59,22 +59,11 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction
 
-      - name: Setup cache variables
-        shell: bash
-        id: cache-vars
-        run: |
-          echo "date=$(/bin/date -u "+%m%w%Y")" >> $GITHUB_OUTPUT
-
-      #- name: Install and cache ffmpeg (all OS)
-      #  uses: FedericoCarboni/setup-ffmpeg@v2
-      #  with:
-      #    token: ${{ secrets.GITHUB_TOKEN }}
-      #  id: setup-ffmpeg
-
       - name: Typecheck with mypy
         run: |
           poetry run mypy
 
       - name: Run tests
         run: |
-          poetry run python -m pytest
+          source $VENV
+          pytest --version
