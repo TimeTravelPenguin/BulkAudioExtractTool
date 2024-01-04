@@ -4,13 +4,13 @@ version = "0.1.1-alpha"
 description = ""
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "BAET", from = "src" }, { include = "app", from = "src" }]
+packages = [{ include = "BAET", from = "src" }]
 
 [project.urls]
 Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
-baet = "app.main:main"
+baet = "BAET.__main__:main"
 
 [tool.poetry.dev-dependencies]
 black = "*"
