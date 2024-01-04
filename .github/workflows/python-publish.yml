@@ -1,0 +1,40 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: python -m pip install --upgrade poetry
+
+    - name: Build and publish to pypi
+      uses: JRubics/poetry-publish@v1.17
+      with:
+        python_version: "3.12"
+        pypi_token: ${{ secrets.PYPI_TOKEN }}
+        build_format: "wheel"
+        allow_poetry_pre_release: "yes"
+        ignore_dev_requirements: "yes"
+
+    #- name: Upload Release Asset
+    #  id: upload-release
+    #  uses: actions/upload-release-asset@v1
+    #  env:
+    #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #  with:
+    #      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #      asset_path: dist/manim-${{ steps.create_release.outputs.tag_name }}.tar.gz
+    #      asset_name: manim-${{ steps.create_release.outputs.tag_name }}.tar.gz
+    #      asset_content_type: application/gzip

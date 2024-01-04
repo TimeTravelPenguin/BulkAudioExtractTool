@@ -4,33 +4,32 @@ version = "0.1.1-alpha"
 description = ""
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "BAET", from = "src" }, { include = "app", from = "src" }]
+packages = [{ include = "BAET", from = "src" }]
 
 [project.urls]
 Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
-baet = "app.main:main"
+baet = "BAET.__main__:main"
 
 [tool.poetry.dev-dependencies]
 black = "*"
 isort = "*"
 mypy = "*"
-pylint = "*"
 pre-commit = "^3.6.0"
+pylint = "*"
+pytest = "^7.4.4"
 types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-
-[tool.poetry.group.app.dependencies]
+asyncio = "^3.4.3"
+bidict = "^0.22.1"
 ffmpeg-python = "^0.2.0"
+more-itertools = "^10.1.0"
 pydantic = "^2.5.2"
 rich = "^13.7.0"
 rich-argparse = "^1.4.0"
-more-itertools = "^10.1.0"
-bidict = "^0.22.1"
-asyncio = "^3.4.3"
 
 [tool.black]
 target-version = ["py312"]

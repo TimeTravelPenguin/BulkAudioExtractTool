@@ -8,5 +8,9 @@ app_theme = Theme(
         "argparse.arg_default_value": "not italic bold dim",
         "argparse.help_keyword": "bold blue",
         "argparse.debug_todo": "reverse bold indian_red",
+        "status.waiting": "dim bright_white",
+        "status.running": "bright_cyan",
+        "status.completed": "bright_green",
+        "status.error": "bright_red",
     }
 )
