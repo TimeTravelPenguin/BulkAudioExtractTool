@@ -1,37 +1,53 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-default_language_version:
-  python: python3.12
-
 fail_fast: false
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
       - id: check-yaml
-      - id: check-added-large-files
-      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: check-vcs-permalinks
+      - id: check-shebang-scripts-are-executable
+      - id: trailing-whitespace
 
-  - repo: https://github.com/floatingpurr/sync_with_poetry
-    rev: 1.1.0
-    hooks:
-      - id: sync_with_poetry
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
     hooks:
-      - id: isort
-        name: isort (python)
-        args: [ "--profile", "black" ]
+      - id: python-check-mock-methods
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.4.0
+    hooks:
+      - id: pycln
+        args: [ --all ]
 
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
       - id: black
         args: [ --safe ]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        language_version: "3.12"
+        args: [ "--profile", "black" ]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
@@ -49,6 +65,6 @@ repos:
       - id: poetry-check
       - id: poetry-lock
       - id: poetry-export
-        args: [ "--only", "app", "-f", "requirements.txt", "-o", "requirements.txt" ]
+        args: [ "--without", "dev", "-f", "requirements.txt", "-o", "requirements.txt" ]
         verbose: true
       - id: poetry-install
