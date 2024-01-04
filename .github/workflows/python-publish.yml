@@ -3,7 +3,7 @@ name: Publish Release
 on:
   push:
     tags:
-      - "*.*.*"
+      - "v*.*.*"
 
 jobs:
   release:
@@ -37,7 +37,6 @@ jobs:
       - name: Build and publish to pypi
         uses: JRubics/poetry-publish@v1.17
         with:
-          python_version: "3.12"
           pypi_token: ${{ secrets.PYPI_TOKEN }}
           plugins: "poetry-dynamic-versioning[plugin]"
           build_format: "wheel"
