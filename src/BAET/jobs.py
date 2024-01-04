@@ -17,7 +17,7 @@ class FFmpegJob:
         self.indexed_outputs: IndexedOutputs = indexed_outputs
         self.audio_streams = audio_streams
 
-        indexed_audio_streams = dict()
+        indexed_audio_streams = {}
         for stream in audio_streams:
             indexed_audio_streams[stream["index"]] = stream
         self.indexed_audio_streams: IndexedAudioStream = indexed_audio_streams
