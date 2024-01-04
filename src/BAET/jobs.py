@@ -32,7 +32,7 @@ class FFmpegJob:
         return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
 
     def stream(self, index: StreamIndex) -> AudioStream:
-        stream: AudioStream = first_true(
+        stream: AudioStream | None = first_true(
             self.audio_streams,
             default=None,
             pred=lambda st: st["index"] == index,
