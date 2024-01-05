@@ -1,6 +1,7 @@
 import inspect
 import logging
-from logging import Logger
+from logging import FileHandler, Logger
+from pathlib import Path
 
 from rich.logging import RichHandler
 
@@ -28,3 +29,13 @@ def create_logger() -> Logger:
 
     logger = app_logger.getChild(module_name)
     return logger
+
+
+def configure_logging(*, enable_logging: bool = True, file_out: Path | None = None) -> None:
+    if not enable_logging:
+        logging.disable(logging.CRITICAL)
+
+    if file_out is not None:
+        handler = FileHandler(filename=file_out)
+        handler.setFormatter(rich_handler.formatter)
+        app_logger.addHandler(handler)
