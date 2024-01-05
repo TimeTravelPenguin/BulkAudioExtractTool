@@ -16,6 +16,7 @@ from typing_extensions import Annotated
 
 from BAET._console import app_console
 from BAET._metadata import app_version
+from ._path import ffmpeg_version_info
 
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
@@ -86,6 +87,9 @@ class AppDescription:
             ),
             (
                 Padding(Text("Author:", justify="right"), (0, 5, 0, 0)),
+                Text("FFmpeg Version:", justify="right"),
+                Text(ffmpeg_version_info.version, style="app.version", justify="left"),
+            ),
                 Text("Phillip Smith", style="bright_yellow", justify="left"),
             ),
             (
