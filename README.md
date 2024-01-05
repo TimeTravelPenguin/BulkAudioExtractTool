@@ -58,7 +58,7 @@ baet -i "~/inputs" -o "~/outputs"
 ```
 
 Unless you add the option `--no-subdirs`, a video `~/inputs/my_video.mp4` will have each audio track individually
-exported to an audio file located in `./outputs/my_video/`.
+exported to an audio file located in `~/outputs/my_video/`.
 
 ### Note on the help screen
 
