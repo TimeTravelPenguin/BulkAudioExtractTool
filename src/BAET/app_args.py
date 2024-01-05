@@ -125,8 +125,8 @@ def new_empty_argparser() -> ArgumentParser:
     return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (src)",
         description=description,  # type: ignore
-        epilog=Markdown(  # type: ignore
-            "Phillip Smith, 2023",
+        epilog=Markdown(
+            "Phillip Smith, 2024",
             justify="right",
             style="argparse.prog",
         ),
