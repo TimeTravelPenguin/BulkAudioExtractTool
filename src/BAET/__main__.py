@@ -31,7 +31,6 @@ def main() -> None:
         configure_logging(enable_logging=False, file_out=None)
 
     logger = create_logger()
-    logger.info("Building extractor jobs")
     extractor = MultiTrackAudioBulkExtractor(args)
 
     with Live(extractor, console=app_console):
