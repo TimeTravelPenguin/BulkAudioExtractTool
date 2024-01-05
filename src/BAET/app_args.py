@@ -40,7 +40,6 @@ class InputFilters(BaseModel):
 
 
 class OutputConfigurationOptions(BaseModel):
-    output_streams_separately: bool = Field(...)
     overwrite_existing: bool = Field(...)
     no_output_subdirs: bool = Field(...)
     acodec: str = Field(...)
@@ -212,17 +211,6 @@ def get_args() -> AppArgs:
     )
 
     output_group.add_argument(
-        "--output-streams-separately",
-        "--sep",
-        default=False,
-        action="store_true",
-        help="[TODO] When set, individual commands are given to [blue]ffmpeg[/] to export each stream. Otherwise, "
-        "a single command is given to ffmpeg to export all streams. This latter option will result in all files "
-        "appearing in the directory at once, and so any errors may result in a loss of data. Setting this flag "
-        "may be useful when experiencing errors. (Default: False)",
-    )
-
-    output_group.add_argument(
         "--overwrite-existing",
         "--overwrite",
         default=False,
@@ -324,7 +312,6 @@ def get_args() -> AppArgs:
     input_filters = InputFilters(include=args.include, exclude=args.exclude)
 
     output_config = OutputConfigurationOptions(
-        output_streams_separately=args.output_streams_separately,
         overwrite_existing=args.overwrite_existing,
         no_output_subdirs=args.no_output_subdirs,
         acodec=args.acodec,
