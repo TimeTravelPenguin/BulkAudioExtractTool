@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "BAET"
-version = "0.1.2.post4.dev0"
-description = ""
+version = "0.1.3.dev0"
+description = "A tool to bulk extract audio tracks from video using FFmpeg"
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "BAET", from = "src" }]
 classifiers = [
     "Environment :: Console",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Conversion",
+    "Topic :: Multimedia :: Video :: Conversion",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
@@ -16,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
+homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
 baet = "BAET.__main__:main"
