@@ -46,6 +46,19 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         raise e
 
 
+def can_write_file(file: Path, has_overwrite_permission: bool) -> bool:
+    if not file.exists():
+        return True
+
+    if has_overwrite_permission:
+        return True
+
+    return Confirm.ask(  # type: ignore
+        f"The file {file.name} already exists. Overwrite?",
+        console=app_console,
+    )
+
+
 class FileSourceDirectory:
     def __init__(self, directory: Path, filters: InputFilters):
         if not directory.is_dir():
@@ -111,27 +124,26 @@ class MultitrackAudioBulkExtractorJobs:
                     self._output_configuration.fallback_sample_rate,
                 )
 
-                if not self._output_configuration.overwrite_existing and output_path.exists():
-                    if not Confirm.ask(
-                        f"The file {output_path.name} already exists. Overwrite?",
-                        console=app_console,
-                    ):
-                        continue
-
-                # Add stream here since otherwise there will possibly be more streams to indexes
-                # TODO: Maybe make a function/class to help with this?
-                audio_streams.append(stream)
-
-                indexed_outputs[stream_index] = (
-                    ffmpeg.output(
-                        ffmpeg_input[f"a:{idx}"],
-                        str(output_path),
-                        acodec=self._output_configuration.acodec,
-                        audio_bitrate=sample_rate,
-                    )
-                    .overwrite_output()
-                    .global_args("-progress", "-", "-nostats")
+                can_write = can_write_file(
+                    file=output_path,
+                    has_overwrite_permission=self._output_configuration.overwrite_existing,
                 )
+
+                if can_write:
+                    # Add stream here since otherwise there will possibly be more streams to indexes
+                    # TODO: Maybe make a function/class to help with this?
+                    audio_streams.append(stream)
+
+                    indexed_outputs[stream_index] = (
+                        ffmpeg.output(
+                            ffmpeg_input[f"a:{idx}"],
+                            str(output_path),
+                            acodec=self._output_configuration.acodec,
+                            audio_bitrate=sample_rate,
+                        )
+                        .overwrite_output()
+                        .global_args("-progress", "-", "-nostats")
+                    )
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
 
