@@ -54,7 +54,7 @@ def can_write_file(file: Path, has_overwrite_permission: bool) -> bool:
         return True
 
     return Confirm.ask(  # type: ignore
-        f"The file {file.name} already exists. Overwrite?",
+        f'The file "{file.name}" already exists. Overwrite?',
         console=app_console,
     )
 
@@ -108,7 +108,7 @@ class MultitrackAudioBulkExtractorJobs:
         return out_path / filename
 
     def build_job(self, file: Path) -> FFmpegJob:
-        logger.info(f"Building job for {file}")
+        logger.info(f'Building job for "{file}"')
 
         audio_streams: list[AudioStream] = []
         indexed_outputs: MutableMapping[int, Stream] = {}
