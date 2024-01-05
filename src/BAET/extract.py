@@ -179,5 +179,5 @@ class MultiTrackAudioBulkExtractor:
 
         logger.info("Starting synchronous execution of queued jobs")
         for progress in job_progresses:
-            logger.info(f"Starting job '{progress.job.input_file}'")
+            logger.info(f'Starting job "{progress.job.input_file}"')
             progress.start()
