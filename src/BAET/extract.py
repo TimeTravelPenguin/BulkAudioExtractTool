@@ -7,10 +7,11 @@ import ffmpeg
 from ffmpeg import Stream
 from rich.console import Console, ConsoleOptions, Group, RenderResult
 from rich.padding import Padding
+from rich.prompt import Confirm
 from rich.table import Table
 
 from ._aliases import AudioStream
-from ._console import error_console
+from ._console import app_console, error_console
 from ._constants import VIDEO_EXTENSIONS
 from ._logging import create_logger
 from .app_args import AppArgs, InputFilters, OutputConfigurationOptions
@@ -32,7 +33,9 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         )
 
         if not audio_streams:
-            raise ValueError("No audio streams found")
+            logger.warning("No audio streams found")
+            yield []
+            return
 
         logger.info("Found %d audio streams", len(audio_streams))
         yield audio_streams
@@ -41,6 +44,13 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         logger.critical("%s: %s", type(e).__name__, e)
         error_console.print_exception()
         raise e
+
+
+def probe_audio_streams_list(file: Path) -> list[AudioStream]:
+    out = []
+    with probe_audio_streams(file) as streams:
+        out.extend(streams)
+    return out
 
 
 class FileSourceDirectory:
@@ -97,29 +107,38 @@ class MultitrackAudioBulkExtractorJobs:
         audio_streams: list[AudioStream] = []
         indexed_outputs: MutableMapping[int, Stream] = {}
 
-        with probe_audio_streams(file) as streams:
-            for idx, stream in enumerate(streams):
+        file = file.expanduser()
+        streams = probe_audio_streams_list(file)
+        for idx, stream in enumerate(streams):
+            ffmpeg_input = ffmpeg.input(str(file))
+            stream_index = stream["index"]
+            output_path = self._create_output_filepath(file, stream_index)
+            sample_rate = stream.get(
+                "sample_rate",
+                self._output_configuration.fallback_sample_rate,
+            )
+
+            if not self._output_configuration.overwrite_existing and output_path.exists():
+                if not Confirm.ask(
+                    f"The file {output_path.name} already exists. Overwrite?",
+                    console=app_console,
+                ):
+                    continue
+
+                # Add stream here since otherwise there will possibly be more streams to indexes
+                # TODO: Make a function/class to help with this
                 audio_streams.append(stream)
 
-                ffmpeg_input = ffmpeg.input(str(file))
-                stream_index = stream["index"]
-                output_path = self._create_output_filepath(file, stream_index)
-                sample_rate = stream.get(
-                    "sample_rate",
-                    self._output_configuration.fallback_sample_rate,
+                indexed_outputs[stream_index] = (
+                    ffmpeg.output(
+                        ffmpeg_input[f"a:{idx}"],
+                        str(output_path),
+                        acodec=self._output_configuration.acodec,
+                        audio_bitrate=sample_rate,
+                    )
+                    .overwrite_output()
+                    .global_args("-progress", "-", "-nostats")
                 )
-
-                ffmpeg_output = ffmpeg.output(
-                    ffmpeg_input[f"a:{idx}"],
-                    str(output_path),
-                    acodec=self._output_configuration.acodec,
-                    audio_bitrate=sample_rate,
-                )
-
-                if self._output_configuration.overwrite_existing:
-                    ffmpeg_output = ffmpeg.overwrite_output(ffmpeg_output)
-
-                indexed_outputs[stream_index] = ffmpeg_output.global_args("-progress", "-", "-nostats")
 
         return FFmpegJob(file, audio_streams, indexed_outputs)
 
@@ -130,6 +149,8 @@ class MultitrackAudioBulkExtractorJobs:
 class MultiTrackAudioBulkExtractor:
     def __init__(self, app_args: AppArgs) -> None:
         logger.info("Starting MultiTrackAudioBulkExtractor")
+
+        self._app_args = app_args
         self._extractor_jobs = MultitrackAudioBulkExtractorJobs(
             app_args.input_dir,
             app_args.output_dir,
@@ -137,13 +158,18 @@ class MultiTrackAudioBulkExtractor:
             app_args.output_configuration,
         )
 
+        # Need to compile the jobs here, otherwise rich bugs out when prompting.
+        # This is because run_synchronously is called within a live display, which is buggy.
+        # In the future, a refactor to separate the running of jobs from this class can make things less complex
+        self._jobs = list(self._extractor_jobs)
+
         self.display = Table.grid()
 
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield self.display
 
     def run_synchronously(self) -> None:
-        job_progresses = [FFmpegJobProgress(job) for job in self._extractor_jobs]
+        job_progresses = [FFmpegJobProgress(job) for job in self._jobs]
         self.display.add_row(Padding(Group(*job_progresses), pad=(1, 2)))
 
         for progress in job_progresses:

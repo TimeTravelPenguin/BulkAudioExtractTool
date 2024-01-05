@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "BAET"
-version = "0.0.0.post86.dev0"
+version = "0.1.2.post4.dev0"
 description = ""
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"

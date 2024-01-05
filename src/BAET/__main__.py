@@ -11,8 +11,6 @@ from BAET.extract import MultiTrackAudioBulkExtractor
 
 install(show_locals=True)
 
-VIDEO_EXTENSIONS = [".mp4", ".mkv"]
-
 
 def main() -> None:
     args = get_args()
