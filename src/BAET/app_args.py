@@ -14,8 +14,8 @@ from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
 from typing_extensions import Annotated
 
-from BAET._console import app_console
-from BAET._metadata import app_version
+from ._console import app_console
+from ._metadata import app_version
 from ._path import ffmpeg_version_info
 
 file_type_pattern = re.compile(r"^\.?(\w+)$")
@@ -74,7 +74,7 @@ class AppDescription:
         website_link = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
         desc_kvps = [
             (
-                Padding(Text("App name:", justify="right"), (0, 5, 0, 0)),
+                Text("App name:", justify="right"),
                 Text(
                     "Bulk Audio Extract Tool (BAET)",
                     style="argparse.prog",
@@ -82,18 +82,19 @@ class AppDescription:
                 ),
             ),
             (
-                Padding(Text("Version:", justify="right"), (0, 5, 0, 0)),
+                Text("App Version:", justify="right"),
                 Text(app_version(), style="app.version", justify="left"),
             ),
             (
-                Padding(Text("Author:", justify="right"), (0, 5, 0, 0)),
                 Text("FFmpeg Version:", justify="right"),
                 Text(ffmpeg_version_info.version, style="app.version", justify="left"),
             ),
+            (
+                Text("Author:", justify="right"),
                 Text("Phillip Smith", style="bright_yellow", justify="left"),
             ),
             (
-                Padding(Text("Website:", justify="right"), (0, 5, 0, 0)),
+                Text("Website:", justify="right"),
                 Text(
                     website_link,
                     style=f"underline blue link {website_link}",
@@ -106,7 +107,7 @@ class AppDescription:
         grid.add_column(justify="left")
         grid.add_column(justify="right")
         for key, value in desc_kvps:
-            grid.add_row(key, value)
+            grid.add_row(Padding(key, (0, 3, 0, 0)), value)
 
         yield grid
 
