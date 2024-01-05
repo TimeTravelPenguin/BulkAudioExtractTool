@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "BAET"
-version = "0.1.2"
+version = "0.0.0.post86.dev0"
 description = ""
 authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
@@ -55,6 +55,7 @@ testpaths = ["tests"]
 
 [tool.poetry-dynamic-versioning]
 enable = true
+metadata = false
 vcs = "git"
 
 [build-system]
