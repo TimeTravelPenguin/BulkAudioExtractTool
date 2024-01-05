@@ -20,13 +20,15 @@ def main() -> None:
         rich.print(args)
         sys.exit(0)
 
-    if not args.debug_options.logging:
+    if args.debug_options.logging:
         log_path = Path("~/.baet").expanduser()
         log_path.mkdir(parents=True, exist_ok=True)
         log_file = log_path / f"logs_{datetime.now()}.txt"
         log_file.touch()
 
         configure_logging(enable_logging=True, file_out=log_file)
+    else:
+        configure_logging(enable_logging=False, file_out=None)
 
     logger = create_logger()
     logger.info("Building extractor jobs")
