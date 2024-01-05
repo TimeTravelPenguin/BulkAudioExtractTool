@@ -67,7 +67,7 @@ class DebugOptions(BaseModel):
 class AppDescription:
     @staticmethod
     def __rich_console__(console: Console, options: ConsoleOptions) -> RenderResult:
-        yield Markdown("# Bulk Audio Extract Tool (src)")
+        yield Padding(Markdown("# Bulk Audio Extract Tool"), pad=(1, 0))
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
         website_link = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
@@ -75,7 +75,7 @@ class AppDescription:
             (
                 Padding(Text("App name:", justify="right"), (0, 5, 0, 0)),
                 Text(
-                    "Bulk Audio Extract Tool (src)",
+                    "Bulk Audio Extract Tool (BAET)",
                     style="argparse.prog",
                     justify="left",
                 ),
