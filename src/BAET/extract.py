@@ -172,6 +172,7 @@ class MultiTrackAudioBulkExtractor:
         job_progresses = [FFmpegJobProgress(job) for job in self._jobs]
         self.display.add_row(Padding(Group(*job_progresses), pad=(1, 2)))
 
+        logger.info("Starting synchronous execution of queued jobs")
         for progress in job_progresses:
-            logger.info(f"Processing job '{progress.job.input_file}'")
+            logger.info(f"Starting job '{progress.job.input_file}'")
             progress.start()

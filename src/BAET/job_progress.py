@@ -110,6 +110,7 @@ class FFmpegJobProgress(ConsoleRenderable):
 
     def start(self) -> None:
         self._overall_progress.start_task(self._overall_progress_task)
+        logger.info(f"Stream index map bimap: {self._stream_task_bimap.values()}")
         for task in self._stream_task_bimap.values():
             self._stream_task_progress.start_task(task)
             self._stream_task_progress.update(task, status="Working")
