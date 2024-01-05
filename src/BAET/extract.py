@@ -46,13 +46,6 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
         raise e
 
 
-def probe_audio_streams_list(file: Path) -> list[AudioStream]:
-    out = []
-    with probe_audio_streams(file) as streams:
-        out.extend(streams)
-    return out
-
-
 class FileSourceDirectory:
     def __init__(self, directory: Path, filters: InputFilters):
         if not directory.is_dir():
@@ -108,25 +101,25 @@ class MultitrackAudioBulkExtractorJobs:
         indexed_outputs: MutableMapping[int, Stream] = {}
 
         file = file.expanduser()
-        streams = probe_audio_streams_list(file)
-        for idx, stream in enumerate(streams):
-            ffmpeg_input = ffmpeg.input(str(file))
-            stream_index = stream["index"]
-            output_path = self._create_output_filepath(file, stream_index)
-            sample_rate = stream.get(
-                "sample_rate",
-                self._output_configuration.fallback_sample_rate,
-            )
+        with probe_audio_streams(file) as streams:
+            for idx, stream in enumerate(streams):
+                ffmpeg_input = ffmpeg.input(str(file))
+                stream_index = stream["index"]
+                output_path = self._create_output_filepath(file, stream_index)
+                sample_rate = stream.get(
+                    "sample_rate",
+                    self._output_configuration.fallback_sample_rate,
+                )
 
-            if not self._output_configuration.overwrite_existing and output_path.exists():
-                if not Confirm.ask(
-                    f"The file {output_path.name} already exists. Overwrite?",
-                    console=app_console,
-                ):
-                    continue
+                if not self._output_configuration.overwrite_existing and output_path.exists():
+                    if not Confirm.ask(
+                        f"The file {output_path.name} already exists. Overwrite?",
+                        console=app_console,
+                    ):
+                        continue
 
                 # Add stream here since otherwise there will possibly be more streams to indexes
-                # TODO: Make a function/class to help with this
+                # TODO: Maybe make a function/class to help with this?
                 audio_streams.append(stream)
 
                 indexed_outputs[stream_index] = (
