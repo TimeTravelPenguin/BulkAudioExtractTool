@@ -92,6 +92,8 @@ class MultitrackAudioBulkExtractorJobs:
         return out_path / filename
 
     def build_job(self, file: Path) -> FFmpegJob:
+        logger.info(f"Building job for {file}")
+
         audio_streams: list[AudioStream] = []
         indexed_outputs: MutableMapping[int, Stream] = {}
 
@@ -127,6 +129,7 @@ class MultitrackAudioBulkExtractorJobs:
 
 class MultiTrackAudioBulkExtractor:
     def __init__(self, app_args: AppArgs) -> None:
+        logger.info("Starting MultiTrackAudioBulkExtractor")
         self._extractor_jobs = MultitrackAudioBulkExtractorJobs(
             app_args.input_dir,
             app_args.output_dir,
@@ -135,7 +138,6 @@ class MultiTrackAudioBulkExtractor:
         )
 
         self.display = Table.grid()
-        self._logger = logger
 
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         yield self.display
@@ -145,5 +147,5 @@ class MultiTrackAudioBulkExtractor:
         self.display.add_row(Padding(Group(*job_progresses), pad=(1, 2)))
 
         for progress in job_progresses:
-            self._logger.info(f"Processing input file '{progress.job.input_file}'")
+            logger.info(f"Processing job '{progress.job.input_file}'")
             progress.start()
