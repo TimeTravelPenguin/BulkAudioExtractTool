@@ -1,4 +1,5 @@
-from typing import Literal, Sequence, TypeAlias
+from collections.abc import Sequence
+from typing import Literal, TypeAlias
 
 VideoExtension: TypeAlias = Literal[".mp4", ".mkv"]
 

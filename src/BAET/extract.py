@@ -53,9 +53,11 @@ def can_write_file(file: Path, has_overwrite_permission: bool) -> bool:
     if has_overwrite_permission:
         return True
 
-    return Confirm.ask(  # type: ignore
-        f'The file "{file.name}" already exists. Overwrite?',
-        console=app_console,
+    return bool(
+        Confirm.ask(
+            f'The file "{file.name}" already exists. Overwrite?',
+            console=app_console,
+        )
     )
 
 

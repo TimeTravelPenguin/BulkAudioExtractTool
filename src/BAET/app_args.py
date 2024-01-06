@@ -3,6 +3,7 @@ import re
 from argparse import ArgumentParser
 from pathlib import Path
 from re import Pattern
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, DirectoryPath, Field, field_validator
 from rich.console import Console, ConsoleOptions, RenderResult
@@ -12,7 +13,6 @@ from rich.table import Table
 from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
-from typing_extensions import Annotated
 
 from ._console import app_console
 from ._metadata import app_version
@@ -126,14 +126,16 @@ def new_empty_argparser() -> ArgumentParser:
     RichHelpFormatter.highlights.append(r"(?P<help_keyword>ffmpeg|ffprobe)")
     RichHelpFormatter.highlights.append(r"(?P<debug_todo>\[TODO\])")
 
+    epilog = Markdown(
+        "Phillip Smith, 2024",
+        justify="right",
+        style="argparse.prog",
+    )
+
     return argparse.ArgumentParser(
         prog="Bulk Audio Extract Tool (src)",
         description=description,  # type: ignore
-        epilog=Markdown(
-            "Phillip Smith, 2024",
-            justify="right",
-            style="argparse.prog",
-        ),
+        epilog=epilog,  # type: ignore
         formatter_class=get_formatter,
     )
 

@@ -35,7 +35,7 @@ class FFmpegJob:
         stream: AudioStream | None = first_true(
             self.audio_streams,
             default=None,
-            pred=lambda st: st["index"] == index,
+            pred=lambda st: st["index"] == index if st is not None else None,
         )
 
         if stream is None:

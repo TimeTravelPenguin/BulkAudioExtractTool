@@ -45,18 +45,19 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
-        language_version: "3.12"
         args: ["--profile", "black"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
     hooks:
       - id: mypy
+        additional_dependencies: [rich >= 13.7.0, rich-argparse >= 1.4.0]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
     hooks:
       - id: pyupgrade
+        args: [--py311-plus]
 
   - repo: https://github.com/python-poetry/poetry
     rev: 1.7.0
