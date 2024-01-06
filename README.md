@@ -1,10 +1,12 @@
-# Bulk Audio Extract Tool
+<img src="./images/logo.png" alt="Logo" style="display: block; max-width: 50%; margin: auto">
 
-<img src="./images/help-preview.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
+<h2 align="center">
+    A commandline tool to bulk export audio tracks.
+</h2>
 
-## About
-
-Bulk Audio Extract Tool (BAET) is a commandline tool to bulk export audio tracks from within a single directory.
+<p align="center">
+    <a href="https://github.com/TimeTravelPenguin/BulkAudioExtractTool/actions/workflows/CI.yml"><img src="https://github.com/TimeTravelPenguin/BulkAudioExtractTool/actions/workflows/CI.yml/badge.svg?branch=main" alt="CI">
+</p>
 
 ## Install
 
@@ -49,6 +51,8 @@ baet --version
 ## Usage
 
 Once installed, calling `baet --help` will display the general help screen, showing a list of options you can use.
+
+<img src="./images/help-preview.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
 
 To simply extract the audio tracks of all videos in a directory `~/inputs`,
 and extract each into a subdirectory of `~/outputs`, call
