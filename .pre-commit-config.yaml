@@ -32,13 +32,13 @@ repos:
     rev: v2.4.0
     hooks:
       - id: pycln
-        args: [ --all ]
+        args: [--all]
 
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
       - id: black
-        args: [ --safe ]
+        args: [--safe]
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
@@ -46,7 +46,7 @@ repos:
       - id: isort
         name: isort (python)
         language_version: "3.12"
-        args: [ "--profile", "black" ]
+        args: ["--profile", "black"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
@@ -63,7 +63,5 @@ repos:
     hooks:
       - id: poetry-check
       - id: poetry-lock
-      - id: poetry-export
-        args: [ "--without", "dev", "-f", "requirements.txt", "-o", "requirements.txt" ]
         verbose: true
       - id: poetry-install
