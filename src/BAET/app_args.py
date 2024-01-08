@@ -141,14 +141,7 @@ def new_empty_argparser() -> ArgumentParser:
 
 
 class AppArgs(BaseModel):
-    """Application commandline arguments.
-
-    Raises:
-        ValueError: The provided path is not a directory.
-
-    Returns:
-        DirectoryPath: Validated directory path.
-    """
+    """Application commandline arguments."""
 
     model_config = ConfigDict(frozen=True, from_attributes=True)
 

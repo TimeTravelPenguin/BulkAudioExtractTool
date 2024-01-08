@@ -1,4 +1,15 @@
 [flake8]
 max-line-length = 120
 docstring-convention=numpy
+
+# Plugin: flake8-quotes
+inline-quotes = double
+
+extend-select = A00, B, B9, PT, Q0, SIM
+
+# TODO: Add more!!!
+                # General
 extend-ignore = E203, E704
+
+                # Plugin: flake8-bugbear
+                B950
