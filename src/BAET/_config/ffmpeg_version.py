@@ -1,15 +1,20 @@
+import importlib.metadata
 import subprocess
 from os import PathLike
+from shutil import which
+from subprocess import CalledProcessError
 
-from ._console import error_console
-from ._logging import create_logger
+from .console import error_console
+from .logging import create_logger
 
 logger = create_logger()
 
 
-def which_ffmpeg() -> str | PathLike[str] | None:
-    from shutil import which
+def app_version() -> str:
+    return importlib.metadata.version("BAET")
 
+
+def which_ffmpeg() -> str | PathLike[str] | None:
     return which("ffmpeg")
 
 
@@ -20,7 +25,7 @@ def get_ffmpeg_version() -> str | None:
         if not ffmpeg:
             return None
 
-        proc = subprocess.run([ffmpeg, "-version"], capture_output=True)
+        proc = subprocess.run([ffmpeg, "-version"], capture_output=True, check=True)
 
         if proc.returncode != 0:
             err = proc.stderr.decode("utf-8")
@@ -29,6 +34,10 @@ def get_ffmpeg_version() -> str | None:
         output = proc.stdout.decode("utf-8")
         return output[14 : output.find("Copyright")].strip()
 
+    except CalledProcessError as e:
+        logger.critical("FFmpeg exited with a non-zero exit code.\n%s: %s", type(e).__name__, e)
+        error_console.print_exception()
+        raise e
     except RuntimeError as e:
         logger.critical("%s: %s", type(e).__name__, e)
         error_console.print_exception()

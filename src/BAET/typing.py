@@ -11,8 +11,9 @@ Millisecond: TypeAlias = int | float
 # FFmpeg
 StreamIndex: TypeAlias = int
 AudioStream: TypeAlias = dict[str, Any]
+FFmpegOutput: TypeAlias = Stream
 
 # Mappings
-IndexedOutputs: TypeAlias = Mapping[StreamIndex, Stream]
+IndexedOutputs: TypeAlias = Mapping[StreamIndex, FFmpegOutput]
 IndexedAudioStream: TypeAlias = Mapping[StreamIndex, AudioStream]
 StreamTaskBiMap: TypeAlias = BidirectionalMapping[StreamIndex, TaskID]
