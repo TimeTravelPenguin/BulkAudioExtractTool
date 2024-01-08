@@ -14,9 +14,9 @@ from rich.terminal_theme import DIMMED_MONOKAI
 from rich.text import Text
 from rich_argparse import HelpPreviewAction, RichHelpFormatter
 
-from ._console import app_console
-from ._metadata import app_version
-from ._path import ffmpeg_version_info
+from . import __version__
+from ._config.console import app_console
+from ._config.ffmpeg_version import ffmpeg_version_info
 
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
@@ -83,7 +83,7 @@ class AppDescription:
             ),
             (
                 Text("App Version:", justify="right"),
-                Text(app_version(), style="app.version", justify="left"),
+                Text(__version__, style="app.version", justify="left"),
             ),
             (
                 Text("FFmpeg Version:", justify="right"),
@@ -165,7 +165,7 @@ def get_args() -> AppArgs:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"[argparse.prog]%(prog)s[/] version [i]{app_version()}[/]",
+        version=f"[argparse.prog]%(prog)s[/] version [i]{__version__}[/]",
     )
 
     io_group = parser.add_argument_group(

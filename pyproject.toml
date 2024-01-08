@@ -7,16 +7,16 @@ readme = "README.md"
 requires-python = ">=3.11"
 packages = [{ include = "BAET", from = "src" }]
 classifiers = [
-    "Environment :: Console",
-    "Topic :: Multimedia :: Sound/Audio",
-    "Topic :: Multimedia :: Sound/Audio :: Conversion",
-    "Topic :: Multimedia :: Video :: Conversion",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Typing :: Typed",
+  "Environment :: Console",
+  "Topic :: Multimedia :: Sound/Audio",
+  "Topic :: Multimedia :: Sound/Audio :: Conversion",
+  "Topic :: Multimedia :: Video :: Conversion",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Typing :: Typed",
 ]
 
 [project.urls]
@@ -27,6 +27,8 @@ baet = "BAET.__main__:main"
 
 [tool.poetry.dev-dependencies]
 black = "*"
+flake8 = "*"
+flake8-docstrings = "*"
 isort = "*"
 mypy = "*"
 pre-commit = "^3.6.0"
@@ -46,6 +48,7 @@ rich-argparse = "^1.4.0"
 
 [tool.black]
 line-length = 120
+target-version = ["py311", "py312"]
 
 [tool.isort]
 profile = "black"

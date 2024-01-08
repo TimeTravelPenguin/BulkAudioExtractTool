@@ -6,8 +6,8 @@ from rich.repr import Result
 from rich.style import Style
 from rich.text import Text
 
-from BAET._theme import app_theme
-from BAET.progress_status import ProgressStatus, ProgressStatusLiteral, ProgressStatusType
+from ._config.theme import app_theme
+from .progress_status import ProgressStatus, ProgressStatusLiteral, ProgressStatusType
 
 
 def parse_style(style: Style | str) -> Style:
