@@ -6,9 +6,9 @@ import rich
 from rich.live import Live
 from rich.traceback import install
 
-from BAET import app_console, configure_logging, create_logger
-from BAET.app_args import get_args
-from BAET.extract import MultiTrackAudioBulkExtractor
+from . import app_console, configure_logging, create_logger
+from .app_args import get_args
+from .FFmpeg.extract import MultiTrackAudioBulkExtractor
 
 install(show_locals=True)
 

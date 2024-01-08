@@ -5,7 +5,7 @@ from pathlib import Path
 
 from rich.logging import RichHandler
 
-from BAET._console import app_console
+from .console import app_console
 
 rich_handler = RichHandler(rich_tracebacks=True, console=app_console)
 logging.basicConfig(

@@ -10,13 +10,14 @@ from rich.padding import Padding
 from rich.prompt import Confirm
 from rich.table import Table
 
-from ._aliases import AudioStream
-from ._console import app_console, error_console
-from ._constants import VIDEO_EXTENSIONS
-from ._logging import create_logger
-from .app_args import AppArgs, InputFilters, OutputConfigurationOptions
-from .job_progress import FFmpegJobProgress
-from .jobs import FFmpegJob
+from .._config.console import app_console, error_console
+from .._config.logging import create_logger
+from ..app_args import AppArgs, InputFilters, OutputConfigurationOptions
+from ..constants import VIDEO_EXTENSIONS
+from ..Display.job_progress import FFmpegJobProgress
+from ..typing import AudioStream
+from .jobs import AudioExtractJob
+from .typing import AudioStream
 
 logger = create_logger()
 
@@ -47,10 +48,10 @@ def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
 
 
 def can_write_file(file: Path, has_overwrite_permission: bool) -> bool:
-    if not file.exists():
+    if has_overwrite_permission:
         return True
 
-    if has_overwrite_permission:
+    if not file.exists():
         return True
 
     return bool(
@@ -109,7 +110,7 @@ class MultitrackAudioBulkExtractorJobs:
         out_path.mkdir(parents=True, exist_ok=True)
         return out_path / filename
 
-    def build_job(self, file: Path) -> FFmpegJob:
+    def build_job(self, file: Path) -> AudioExtractJob:
         logger.info(f'Building job for "{file}"')
 
         audio_streams: list[AudioStream] = []
@@ -147,9 +148,9 @@ class MultitrackAudioBulkExtractorJobs:
                         .global_args("-progress", "-", "-nostats")
                     )
 
-        return FFmpegJob(file, audio_streams, indexed_outputs)
+        return AudioExtractJob(file, audio_streams, indexed_outputs)
 
-    def __iter__(self) -> Generator[FFmpegJob, Any, None]:
+    def __iter__(self) -> Generator[AudioExtractJob, Any, None]:
         yield from map(self.build_job, self._file_source_directory)
 
 

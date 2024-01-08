@@ -5,17 +5,17 @@ from rich.highlighter import ReprHighlighter
 from rich.padding import Padding
 from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
-from ._aliases import StreamTaskBiMap
-from ._console import app_console
-from ._logging import create_logger
-from .jobs import FFmpegJob
+from .._config.console import app_console
+from .._config.logging import create_logger
+from ..FFmpeg.jobs import AudioExtractJob
+from ..typing import StreamTaskBiMap
 
 logger = create_logger()
 
 
 class FFmpegJobProgress(ConsoleRenderable):
     # TODO: Need mediator to consumer/producer printing
-    def __init__(self, job: FFmpegJob):
+    def __init__(self, job: AudioExtractJob):
         self.job = job
 
         bar_blue = "#5079AF"
@@ -83,7 +83,7 @@ class FFmpegJobProgress(ConsoleRenderable):
 
         logger.info(f"Extracting audio stream {stream_index} of {self.job.input_file.name}")
 
-        output = self.job.indexed_outputs[stream_index]
+        output = self.job.stream_indexed_outputs[stream_index]
 
         proc = ffmpeg.run_async(
             output,
@@ -120,7 +120,7 @@ class FFmpegJobProgress(ConsoleRenderable):
             try:
                 self._run_task(task)
                 self._stream_task_progress.update(task, status="[bold green]Complete[/]")
-            except RuntimeError as e:
+            except RuntimeError:
                 self._stream_task_progress.update(task, status="[bold red]ERROR[/]")
             finally:
                 self._stream_task_progress.stop_task(task)
