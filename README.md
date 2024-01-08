@@ -4,8 +4,19 @@
     A commandline tool to bulk export audio tracks.
 </h2>
 
+<!-- TODO: https://shields.io/badges -->
+
 <p align="center">
-    <a href="https://github.com/TimeTravelPenguin/BulkAudioExtractTool/actions/workflows/CI.yml"><img src="https://github.com/TimeTravelPenguin/BulkAudioExtractTool/actions/workflows/CI.yml/badge.svg?branch=main" alt="CI">
+    <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/baet">
+    <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/baet">
+    <img alt="PyPI - Implementation" src="https://img.shields.io/pypi/implementation/baet">
+    <img alt="Python Version from PEP 621 TOML" src="https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FTimeTravelPenguin%2FBulkAudioExtractTool%2Fmain%2Fpyproject.toml">
+</p>
+
+<p align="center">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/TimeTravelPenguin/BulkAudioExtractTool">
+    <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/TimeTravelPenguin/BulkAudioExtractTool/CI.yml">
+    <img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/TimeTravelPenguin/BulkAudioExtractTool">
 </p>
 
 ## Install
