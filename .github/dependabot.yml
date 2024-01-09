@@ -6,6 +6,15 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
+    versioning-strategy: increase
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+      day: "sunday"
+      time: "08:00"
+      # Use Japan Standard Time (UTC +09:00)
+      timezone: "Australia/Sydney"
+    target-branch: "dev"
+    reviewers:
+      - "TimeTravelPenguin"
+    
