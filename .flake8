@@ -12,4 +12,6 @@ extend-select = A00, B, B9, PT, Q0, SIM
 extend-ignore = E203, E704
 
                 # Plugin: flake8-bugbear
-                B950
+                B950,
+
+                D401

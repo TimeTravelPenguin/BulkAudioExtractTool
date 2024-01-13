@@ -2,7 +2,7 @@ from importlib.metadata import version
 
 from ._config.console import app_console
 from ._config.logging import configure_logging, create_logger
-from ._config.theme import app_theme
+from .theme import app_theme
 
 __version__ = version(__name__)
 
