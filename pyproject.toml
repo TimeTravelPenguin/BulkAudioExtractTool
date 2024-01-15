@@ -1,32 +1,56 @@
 [tool.poetry]
 name = "BAET"
-version = "0.1.3"
+version = "1.0.0a0"
+# TODO: Make PEP621 compliant - https://github.com/python-poetry/roadmap/issues/3
+#requires-python = ">=3.11"
 description = "A tool to bulk extract audio tracks from video using FFmpeg"
-authors = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
+authors = ["Phillip Smith"]
+maintainers = ["TimeTravelPenguin <TimeTravelPenguin@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
 packages = [{ include = "BAET", from = "src" }]
+keywords = ["ffmpeg", "audio", "video", "extract", "bulk", "batch"]
 classifiers = [
-    "Environment :: Console",
-    "Topic :: Multimedia :: Sound/Audio",
-    "Topic :: Multimedia :: Sound/Audio :: Conversion",
-    "Topic :: Multimedia :: Video :: Conversion",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Typing :: Typed",
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Framework :: Flake8",
+  "Framework :: Pytest",
+  "Intended Audience :: End Users/Desktop",
+  "Natural Language :: English",
+  "Topic :: Multimedia :: Sound/Audio",
+  "Topic :: Multimedia :: Sound/Audio :: Conversion",
+  "Topic :: Multimedia :: Video :: Conversion",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Typing :: Typed",
 ]
 
-[project.urls]
+[tool.poetry.urls]
 homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
+repository = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
 baet = "BAET.__main__:main"
+cli = "BAET.cli.cli:test"
+debug = "BAET.debug.__main__:main"
 
 [tool.poetry.dev-dependencies]
 black = "*"
+faker = "^22.0.0"
+flake8 = "*"
+flake8-bugbear = "^23.12.2"
+flake8-builtins = "^2.2.0"
+flake8-comprehensions = "*"
+flake8-docstrings = "*"
+flake8-pytest-style = "^1.7.2"
+flake8-quotes = "^3.3.2"
+flake8-simplify = "^0.21.0"
 isort = "*"
 mypy = "*"
 pre-commit = "^3.6.0"
@@ -35,7 +59,7 @@ pytest = "^7.4.4"
 types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
-python = ">=3.11"
+python = ">=3.11,<4.0.0"
 asyncio = "^3.4.3"
 bidict = "^0.22.1"
 ffmpeg-python = "^0.2.0"
@@ -43,9 +67,11 @@ more-itertools = "^10.1.0"
 pydantic = "^2.5.2"
 rich = "^13.7.0"
 rich-argparse = "^1.4.0"
+rich-click = "^1.7.3"
 
 [tool.black]
 line-length = 120
+target-version = ["py311", "py312"]
 
 [tool.isort]
 profile = "black"
