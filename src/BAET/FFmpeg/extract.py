@@ -17,13 +17,13 @@ from ..constants import VIDEO_EXTENSIONS
 from ..Display.job_progress import FFmpegJobProgress
 from ..typing import AudioStream
 from .jobs import AudioExtractJob
-from .typing import AudioStream
 
 logger = create_logger()
 
 
 @contextlib.contextmanager
 def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
+    """Probe the audio streams of a file."""
     try:
         logger.info('Probing file "%s"', file)
         probe = ffmpeg.probe(file)
