@@ -65,7 +65,7 @@ Once installed, calling `baet --help` will display the general help screen, show
 
 <img src="./docs/img/baet_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
 
-<img src="./docs/img/baet_export_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
+<img src="./docs/img/baet_extract_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
 
 <img src="./docs/img/baet_probe_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
 
