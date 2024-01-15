@@ -1,3 +1,5 @@
+"""Bulk Audio Export Tool (BAET) is a command line tool for exporting audio tracks from video files in bulk."""
+
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +16,7 @@ install(show_locals=True)
 
 
 def main() -> None:
+    """Entry point for BAET."""
     args = get_args()
 
     if args.debug_options.print_args:

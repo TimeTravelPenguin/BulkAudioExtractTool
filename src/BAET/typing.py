@@ -1,3 +1,5 @@
+"""Typing definitions for BAET."""
+
 from collections.abc import Mapping
 from typing import Any, TypeAlias
 

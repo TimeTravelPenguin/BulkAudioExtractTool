@@ -19,9 +19,11 @@ app_logger = logging.getLogger("app_logger")
 
 
 def create_logger() -> Logger:
+    """Decorator that passes the module name to the decorated function."""
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
 
+    """Create and return a logger for the current module."""
     if module is None:
         raise RuntimeError("Could not inspect module")
 
@@ -32,6 +34,15 @@ def create_logger() -> Logger:
 
 
 def configure_logging(*, enable_logging: bool = True, file_out: Path | None = None) -> None:
+    """Configure logging.
+
+    Parameters
+    ----------
+    enable_logging : bool, optional
+        Whether to enable logging, by default True
+    file_out : Path | None, optional
+        The file to write logs to, by default None
+    """
     if not enable_logging:
         logging.disable(logging.CRITICAL)
 

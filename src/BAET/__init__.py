@@ -1,3 +1,5 @@
+"""Bulk Audio Export Tool (BAET) is a command line tool for exporting audio tracks from video files in bulk."""
+
 from importlib.metadata import version
 
 from ._config.console import app_console

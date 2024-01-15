@@ -1,3 +1,5 @@
+"""Application commandline arguments."""
+
 import argparse
 import re
 from argparse import ArgumentParser
@@ -22,12 +24,15 @@ file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
 class InputFilters(BaseModel):
+    """Input filters for files to process."""
+
     include: Pattern[str] = Field(...)
     exclude: Pattern[str] | None = Field(...)
 
     @field_validator("include", mode="before")
     @classmethod
     def validate_include_nonempty(cls, v: str) -> Pattern[str]:
+        """Validate the include pattern is not empty."""
         if v is None or not v.strip():
             return re.compile(".*")
         return re.compile(v)
@@ -35,12 +40,15 @@ class InputFilters(BaseModel):
     @field_validator("exclude", mode="before")
     @classmethod
     def validate_exclude_nonempty(cls, v: str) -> Pattern[str] | None:
+        """Validate the exclude pattern is not empty."""
         if v is None or not v.strip():
             return None
         return re.compile(v)
 
 
 class OutputConfigurationOptions(BaseModel):
+    """Output configuration options."""
+
     overwrite_existing: bool = Field(...)
     no_output_subdirs: bool = Field(...)
     acodec: str = Field(...)
@@ -50,6 +58,7 @@ class OutputConfigurationOptions(BaseModel):
     @field_validator("file_type", mode="before")
     @classmethod
     def validate_file_type(cls, v: str) -> str:
+        """Validate the file type."""
         matched = file_type_pattern.match(v)
         if matched:
             return matched.group(1)
@@ -57,6 +66,8 @@ class OutputConfigurationOptions(BaseModel):
 
 
 class DebugOptions(BaseModel):
+    """Debugging options."""
+
     logging: bool = Field(...)
     dry_run: bool = Field(...)
     trim: Annotated[int, Field(gt=0)] | None = Field(...)
@@ -66,8 +77,11 @@ class DebugOptions(BaseModel):
 
 
 class AppDescription:
+    """Application description."""
+
     @staticmethod
     def __rich_console__(console: Console, options: ConsoleOptions) -> RenderResult:
+        """Render the application description."""
         yield Padding(Markdown("# Bulk Audio Extract Tool"), pad=(1, 0))
         yield "Extract audio from a directory of videos using FFMPEG.\n"
 
@@ -113,6 +127,8 @@ class AppDescription:
 
 
 def new_empty_argparser() -> ArgumentParser:
+    """Create a new empty argument parser."""
+
     def get_formatter(prog: str) -> RichHelpFormatter:
         return RichHelpFormatter(prog, max_help_position=40, console=app_console)
 
@@ -153,6 +169,7 @@ class AppArgs(BaseModel):
 
 
 def get_args() -> AppArgs:
+    """Get the application arguments."""
     parser = new_empty_argparser()
 
     parser.add_argument(
