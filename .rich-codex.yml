@@ -1,0 +1,5 @@
+outputs:
+  - command: "baet --help"
+    title: BAET
+    img_paths:
+      - docs/img/baet_help.svg
