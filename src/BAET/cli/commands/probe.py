@@ -11,7 +11,9 @@ import rich_click as click
 from rich_click import Context, Option
 
 from BAET._config.logging import create_logger
-from BAET.cli.help_configuration import make_help_config
+from BAET.cli.help_configuration import BaetConfig
+
+from ..command_args import CliOptions, pass_cli_options
 
 logger = create_logger()
 
@@ -38,7 +40,7 @@ class ProbeContext:
 
 
 @click.command()
-@click.rich_config(help_config=make_help_config())
+@BaetConfig()
 @click.option(
     "--streams-only",
     "-s",
@@ -62,7 +64,9 @@ class ProbeContext:
     callback=_ffprobe_file,
     required=True,
 )
+@pass_cli_options
 def probe(
+    cli_options: CliOptions,
     file: tuple[Path, dict[str, Any]],
     streams_only: bool,
     tracks: tuple[int, ...] | None,

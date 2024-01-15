@@ -5,21 +5,21 @@ from pathlib import Path
 import rich_click as click
 
 from BAET._config.logging import create_logger
-from BAET.cli.help_configuration import make_help_config
+from BAET.cli.help_configuration import BaetConfig
 
-from ..command_args import CliArgs, pass_cli_args
+from ..command_args import CliOptions, pass_cli_options
 
 logger = create_logger()
 
 
 @click.group()
-@click.rich_config(help_config=make_help_config())
+@BaetConfig()
 def extract() -> None:
     """BAET commandline interface."""
 
 
 @extract.command(name="tracks", help="Extract audio tracks from video files.")
-@click.rich_config(help_config=make_help_config())
+@BaetConfig()
 @click.option(
     "--input-path",
     "-i",
@@ -36,8 +36,8 @@ def extract() -> None:
     show_default=True,
     help="Run without actually producing any output.",
 )
-@pass_cli_args
-def extract_tracks(cli_args: CliArgs, input_path: list[Path], dry_run: bool) -> None:
+@pass_cli_options
+def extract_tracks(cli_args: CliOptions, input_path: list[Path], dry_run: bool) -> None:
     """Extract click command."""
     cli_args.dry_run = dry_run
 
