@@ -1,7 +1,11 @@
 import inspect
 import logging
+from collections.abc import Callable
+from functools import wraps
 from logging import FileHandler, Logger
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 from rich.logging import RichHandler
 
@@ -18,11 +22,20 @@ logging.basicConfig(
 app_logger = logging.getLogger("app_logger")
 
 
-def create_logger() -> Logger:
+def pass_module(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator that passes the module name to the decorated function."""
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
 
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        return func(module, *args, **kwargs)
+
+    return wrapper
+
+
+@pass_module
+def create_logger(module: ModuleType) -> Logger:
     """Create and return a logger for the current module."""
     if module is None:
         raise RuntimeError("Could not inspect module")
@@ -31,6 +44,64 @@ def create_logger() -> Logger:
 
     logger = app_logger.getChild(module_name)
     return logger
+
+
+@pass_module
+def find_module_logger(module: ModuleType) -> Logger:
+    """Find the logger for the current module.
+
+    Parameters
+    ----------
+    module : ModuleType
+        The module to find the logger for.
+
+    Returns
+    -------
+    Logger | None
+        The logger for the module, or None if it doesn't exist.
+
+    Raises
+    ------
+    TypeError
+        If the found logger variable is not of type logging.Logger.
+    """
+    logger = getattr(module, "logger", app_logger)
+
+    if not isinstance(logger, logging.Logger):
+        raise TypeError("logger must be of type logging.Logger")
+
+    return logger
+
+
+def pass_logger(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Passes the modules logger to the decorated function, if it exists. Otherwise, uses the root logger.
+
+    Parameters
+    ----------
+    func : Callable[..., Any]
+        The function to decorate.
+
+    Returns
+    -------
+    Callable[..., Any]
+        The newly decorated function.
+
+    Raises
+    ------
+    RuntimeError
+        If the module cannot be inspected.
+    """
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        logger = find_module_logger()
+
+        if logger is None:
+            logger = app_logger
+
+        return func(logger, *args, **kwargs)
+
+    return wrapper
 
 
 def configure_logging(*, enable_logging: bool = True, file_out: Path | None = None) -> None:

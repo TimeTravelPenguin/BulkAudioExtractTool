@@ -32,11 +32,11 @@ class Output:
 
 
 @dataclass()
-class CliArgs:
+class CliOptions:
     """Argument for a command."""
 
     logging: bool = False
     dry_run: bool = False
 
 
-pass_cli_args = click.make_pass_decorator(CliArgs, ensure=True)
+pass_cli_options = click.make_pass_decorator(CliOptions, ensure=True)
