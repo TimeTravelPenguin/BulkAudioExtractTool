@@ -1,5 +1,15 @@
 outputs:
-  - command: "baet --help"
+  - command: "cli --help"
     title: BAET
     img_paths:
       - docs/img/baet_help.svg
+
+  - command: "cli extract --help"
+    title: BAET
+    img_paths:
+      - docs/img/baet_extract_help.svg
+
+  - command: "cli probe --help"
+    title: BAET
+    img_paths:
+      - docs/img/baet_probe_help.svg

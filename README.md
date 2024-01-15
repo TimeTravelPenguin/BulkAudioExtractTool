@@ -63,7 +63,11 @@ baet --version
 
 Once installed, calling `baet --help` will display the general help screen, showing a list of options you can use.
 
-<img src="./images/help-preview.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
+<img src="./docs/img/baet_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
+
+<img src="./docs/img/baet_export_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
+
+<img src="./docs/img/baet_probe_help.svg" alt="baet help screen" style="display: block; margin: auto; max-height: 500px">
 
 To simply extract the audio tracks of all videos in a directory `~/inputs`,
 and extract each into a subdirectory of `~/outputs`, call
