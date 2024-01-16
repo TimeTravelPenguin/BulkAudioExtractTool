@@ -26,7 +26,13 @@ class Cli(Group):
 @click.option("--logging", "-L", is_flag=True, help="Run the application with logging.")
 @pass_cli_options
 def cli(cli_args: CliOptions, logging: bool) -> None:
-    """# A BAET commandline interface."""
+    """
+    ## Bulk Audio Extraction Tool (BAET)
+
+    This tool provides a simple way to extract audio from video files.
+    - You can use --help on any command to get more information.
+    - You can also
+    """
     cli_args.logging = logging
 
 
@@ -37,3 +43,7 @@ cli.add_command(probe)
 def test() -> None:
     """Test the CLI."""
     cli()
+
+
+if __name__ == "__main__":
+    test()
