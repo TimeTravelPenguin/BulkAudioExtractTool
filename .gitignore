@@ -231,5 +231,4 @@ pyrightconfig.json
 
 .vscode
 .idea
-bundles/*
-!bundles/new_bundle.sh
+bundles
