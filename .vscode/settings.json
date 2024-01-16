@@ -1,0 +1,16 @@
+{
+  "statusbar_command.commands": [
+    {
+      "id": "poetry_run_file",
+      "name": "Python (Poetry): Run file",
+      "text": "$(run-all) Run file (Poetry)",
+      "tooltip": "workspace settings",
+      "alignment": "left",
+      "command": "workbench.action.tasks.runTask",
+      "arguments": [
+        "PythonPoetryCurrentFile"
+      ],
+      "color": "#AFD5FB",
+    },
+  ],
+}

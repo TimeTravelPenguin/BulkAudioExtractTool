@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PythonPoetryCurrentFile",
+      "type": "process",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "command": "poetry",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "${input:PythonModuleName}"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "PythonModuleName",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:extension.commandvariable.file.relativeFileDotsNoExtension}",
+        "find": "src\\.(.*)",
+        "replace": "$1",
+      }
+    }
+  ]
+}

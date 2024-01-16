@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python (Poetry): Current File",
+      "type": "python",
+      "request": "launch",
+      "module": "${input:PythonModuleName}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "PythonModuleName",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:extension.commandvariable.file.relativeFileDotsNoExtension}",
+        "find": "src\\.(.*)",
+        "replace": "$1",
+      }
+    }
+  ]
+}
