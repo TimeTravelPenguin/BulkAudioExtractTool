@@ -50,14 +50,14 @@ repos:
         args:
           [
             --black,
+            --wrap-summaries,
+            "120",
+            --wrap-descriptions,
+            "120",
+            --style,
+            numpy,
             -r,
             -i,
-            --pre-summary-newline,
-            --make-summary-multi-line,
-            --wrap-summaries,
-            "90",
-            --wrap-descriptions,
-            "90",
             src,
             tests,
           ]

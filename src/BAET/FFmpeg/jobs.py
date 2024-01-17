@@ -45,8 +45,7 @@ class JobMetadata:
         job_outputs: Sequence[FFmpegOutput] | None = None,
         stream_indexed_output_map: IndexedOutputs | None = None,
     ):
-        """
-        Metadata for an FFmpeg job.
+        """Metadata for an FFmpeg job.
 
         Parameters
         ----------
