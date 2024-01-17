@@ -1,25 +1,25 @@
 {
-  "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python (Poetry): Current File",
-      "type": "python",
-      "request": "launch",
-      "module": "${input:PythonModuleName}",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": true,
+      "module": "${input:PythonModuleName}",
+      "name": "Python (Poetry): Current File",
+      "request": "launch",
+      "type": "python"
     }
   ],
   "inputs": [
     {
-      "id": "PythonModuleName",
-      "type": "command",
-      "command": "extension.commandvariable.transform",
       "args": {
-        "text": "${command:extension.commandvariable.file.relativeFileDotsNoExtension}",
         "find": "src\\.(.*)",
         "replace": "$1",
-      }
+        "text": "${command:extension.commandvariable.file.relativeFileDotsNoExtension}"
+      },
+      "command": "extension.commandvariable.transform",
+      "id": "PythonModuleName",
+      "type": "command"
     }
-  ]
+  ],
+  "version": "0.2.0"
 }
