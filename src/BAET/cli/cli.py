@@ -1,12 +1,16 @@
 """Application commandline interface."""
 
 import re
+from typing import override
 
 import rich_click as click
-from rich_click import Group
+from click.core import Context
+from click.formatting import HelpFormatter
+from rich_click import Group, RichGroup, RichHelpConfiguration
 
+from BAET._config.console import app_console
 from BAET._config.logging import create_logger
-from BAET.cli.help_configuration import BaetConfig
+from BAET.cli.help_configuration import BaetConfig, BaetHighlighter
 
 from .command_args import CliOptions, pass_cli_options
 from .commands import extract, probe
@@ -16,10 +20,6 @@ logger = create_logger()
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
-class Cli(Group):
-    """Click group with custom help."""
-
-
 @click.group()
 @BaetConfig(use_markdown=True)
 @click.version_option(prog_name="BAET", package_name="BAET", message="%(prog)s v%(version)s")
@@ -27,11 +27,10 @@ class Cli(Group):
 @pass_cli_options
 def cli(cli_args: CliOptions, logging: bool) -> None:
     """
-    ## Bulk Audio Extraction Tool (BAET)
+    **Bulk Audio Extraction Tool (BAET)**
 
     This tool provides a simple way to extract audio from video files.
     - You can use --help on any command to get more information.
-    - You can also
     """
     cli_args.logging = logging
 
