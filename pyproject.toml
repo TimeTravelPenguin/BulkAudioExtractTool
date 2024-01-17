@@ -41,7 +41,9 @@ cli = "BAET.cli.cli:test"
 debug = "BAET.debug.__main__:main"
 
 [tool.poetry.dev-dependencies]
+bandit = "1.7.5"
 black = "*"
+docformatter = "1.7.5"
 faker = "^22.0.0"
 flake8 = "*"
 flake8-bugbear = "^23.12.2"
