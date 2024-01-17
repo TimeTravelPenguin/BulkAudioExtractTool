@@ -34,6 +34,14 @@ repos:
       - id: pycln
         args: [--all]
 
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v4.0.0-alpha.8"
+    hooks:
+      - id: prettier
+        types_or: [yaml, toml, markdown, json]
+        additional_dependencies:
+          - "prettier-plugin-toml"
+
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
