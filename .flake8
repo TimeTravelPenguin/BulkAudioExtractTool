@@ -17,6 +17,6 @@ extend-ignore = E203, E704
                 D401
 
 per-file-ignores =
-    src/BAET/cli/cli.py: D400, D301, D205
-    src/BAET/cli/commands/extract.py: D400, D301, D205
-    src/BAET/cli/commands/probe.py: D400, D301, D205
+    src/BAET/cli/cli.py: D400, D407, D301, D205
+    src/BAET/cli/commands/extract.py: D400, D407, D301, D205
+    src/BAET/cli/commands/probe.py: D400, D407, D301, D205
