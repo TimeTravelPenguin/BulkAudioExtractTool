@@ -1,32 +1,21 @@
 """Call FFprobe on a video file."""
 
-from collections import OrderedDict
+from collections import ChainMap, OrderedDict
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 
 import ffmpeg
 import rich
 import rich_click as click
-from rich_click import Context, Option
 
 from BAET._config.logging import create_logger
-from BAET.cli.help_configuration import BaetConfig
-
-from ..command_args import CliOptions, pass_cli_options
+from BAET.cli.help_configuration import baet_config
 
 logger = create_logger()
 
-
-def _ffprobe_file(ctx: Context, param: Option, value: str) -> tuple[str, Any]:
-    logger.info('Probing file "%s"', value)
-
-    try:
-        probed = ffmpeg.probe(value)
-    except ffmpeg.Error as e:
-        raise click.BadParameter(f"Error probing file: {e.stderr}", param=param) from e
-
-    return value, probed
+_key_selector: TypeAlias = Callable[[dict[str, Any]], dict[str, Any]]
 
 
 @dataclass()
@@ -39,65 +28,76 @@ class ProbeContext:
     key: tuple[str, ...] | None
 
 
-@click.command()
-@BaetConfig()
-@click.option(
-    "--streams-only",
-    "-s",
-    is_flag=True,
-    show_default=True,
-    help="Only show the stream metadata(s), not the format information.",
-)
-@click.option(
-    "--track",
-    "-t",
-    "tracks",
-    type=int,
-    multiple=True,
-    default=None,
-    show_default="All tracks",
-    help="Track number to extract. This will implicitly set --streams-only.",
-)
-@click.argument(
-    "file",
-    type=click.Path(exists=True, resolve_path=True, dir_okay=False, path_type=Path),
-    callback=_ffprobe_file,
-    required=True,
-)
-@pass_cli_options
-def probe(
-    cli_options: CliOptions,
-    file: tuple[Path, dict[str, Any]],
-    streams_only: bool,
-    tracks: tuple[int, ...] | None,
-) -> None:
-    """Call FFprobe on a video file."""
-    file_path, probed = file
-    probed = OrderedDict(probed)
+def _probe_file(file: Path) -> dict[str, Any]:
+    logger.info('Probing file "%s"', file)
 
-    if tracks:
-        streams_only = True
+    try:
+        probed: OrderedDict[str, Any] = OrderedDict(ffmpeg.probe(file))
+    except ffmpeg.Error as e:
+        err: str = e.stderr.decode()
+        raise click.ClickException(f"Error probing file {err.strip().splitlines()[-1]}") from e
 
     if "format" in probed:
         probed.move_to_end("format", last=False)
 
-    streams: list[dict[str, Any]] | None = probed.get("streams")
+    return dict(probed)
 
-    if streams is None:
-        raise click.ClickException(f"No streams found in the file {file_path}")
 
-    if tracks and streams:
+@click.group(chain=True, invoke_without_command=True)
+@baet_config(use_markdown=True)
+@click.argument("file", type=click.Path(exists=True, dir_okay=False), required=True)
+def probe(file: Path) -> None:
+    """Call FFprobe on a video file."""
 
-        def index_in_tracks(stream: dict[str, Any]) -> bool:
-            return stream["index"] in tracks
 
-        streams = list(filter(index_in_tracks, streams))
+@probe.result_callback()
+def probe_result_callback(commands: list[_key_selector], file: Path) -> None:
+    """Run the probe command."""
+    logger.info("Running probe result_callback.")
 
-    rich.print("Results for file:", file_path)
+    probed: dict[str, Any] = _probe_file(file)
 
-    if streams_only:
-        rich.print_json(data={"streams": streams})
+    if not commands:
+        rich.print_json(data=probed)
         return
 
-    probed["streams"] = streams
-    rich.print_json(data=probed)
+    filtered: dict[str, Any] = dict(ChainMap(*[command(probed) for command in commands]))
+
+    rich.print_json(data=filtered)
+
+
+@probe.command(name="filter")
+@click.option(
+    "-a",
+    "--audio",
+    multiple=True,
+    help="Specific audio track index to probe. Can be specified multiple times.",
+    type=click.IntRange(min=0),
+)
+@click.option(
+    "--format/--no-format",
+    "-f/-nf",
+    "format_",
+    default=True,
+    show_default="Enabled",
+    help="Include/Exclude format metadata.",
+)
+def probe_filter(audio: tuple[int, ...], format_: bool | None) -> _key_selector:
+    """Specify which audio streams to probe."""
+    logger.info("Called stream with: %s", audio)
+
+    def processor(meta: dict[str, Any]) -> Any:
+        if "streams" not in meta:
+            raise click.ClickException("No stream metadata found")
+
+        format_dict = {"format": meta["format"]} if format_ else {}
+        return format_dict | {"streams": _filter_streams(audio, meta["streams"])}
+
+    return processor
+
+
+def _filter_streams(indexes: Sequence[int], streams: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not indexes:
+        return streams
+
+    return [stream for stream in streams if stream["index"] in indexes]
