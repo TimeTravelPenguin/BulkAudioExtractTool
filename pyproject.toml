@@ -42,7 +42,7 @@ debug = "BAET.debug.__main__:main"
 
 [tool.poetry.dev-dependencies]
 black = "*"
-faker = "^22.0.0"
+faker = "^22.4.0"
 flake8 = "*"
 flake8-bugbear = "^23.12.2"
 flake8-builtins = "^2.2.0"
