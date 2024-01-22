@@ -42,22 +42,23 @@ debug = "BAET.debug.__main__:main"
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.5"
-black = "*"
+# black = "*"
 docformatter = "1.7.5"
 faker = "^22.4.0"
-flake8 = "*"
-flake8-bugbear = "^24.1.17"
-flake8-builtins = "^2.2.0"
-flake8-comprehensions = "*"
-flake8-docstrings = "*"
-flake8-pytest-style = "^1.7.2"
-flake8-quotes = "^3.3.2"
-flake8-simplify = "^0.21.0"
-isort = "*"
+# flake8 = "*"
+# flake8-bugbear = "^24.1.17"
+# flake8-builtins = "^2.2.0"
+# flake8-comprehensions = "*"
+# flake8-docstrings = "*"
+# flake8-pytest-style = "^1.7.2"
+# flake8-quotes = "^3.3.2"
+# flake8-simplify = "^0.21.0"
+# isort = "*"
 mypy = "*"
 pre-commit = "^3.6.0"
 pylint = "*"
 pytest = "^7.4.4"
+ruff = "^0.1.14"
 types-pygments = "^2.17.0.0"
 
 [tool.poetry.dependencies]
@@ -71,16 +72,31 @@ rich = "^13.7.0"
 rich-argparse = "^1.4.0"
 rich-click = "^1.7.3"
 
-[tool.black]
-line-length = 120
-target-version = ["py311", "py312"]
-
-[tool.isort]
-profile = "black"
-line_length = 120
+# [tool.black]
+# line-length = 120
+# target-version = ["py311", "py312"]
+#
+# [tool.isort]
+# profile = "black"
+# line_length = 120
 
 [tool.mypy]
 mypy_path = "src"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+# src = ["src", "tests"]
+select = [
+   "D", "W", "F","B9", "A00", "PT", "Q0", "SIM"
+
+]
+unfixable = ["B"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
