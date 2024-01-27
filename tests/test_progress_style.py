@@ -1,8 +1,8 @@
 from rich.style import Style
 from rich.text import Text
 
-from BAET.progress_status import ProgressStatus, ProgressStatusType
-from BAET.progress_style import ProgressStyle
+from BAET.display.progress_status import ProgressStatus, ProgressStatusType
+from BAET.display.progress_style import ProgressStyle
 
 
 def test_call_applies_style() -> None:
