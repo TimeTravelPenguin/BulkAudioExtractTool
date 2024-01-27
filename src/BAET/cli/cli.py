@@ -7,8 +7,7 @@ import rich_click as click
 from BAET._config.logging import configure_logging, create_logger
 from BAET.cli.help_configuration import baet_config
 
-from .commands.extract import extract
-from .commands.probe import probe
+from .commands import extract, probe
 
 logger = create_logger()
 
@@ -28,8 +27,8 @@ def cli(logging: bool) -> None:
     configure_logging(enable_logging=logging)
 
 
-cli.add_command(extract)
-cli.add_command(probe)
+cli.add_command(extract.extract)
+cli.add_command(probe.probe)
 
 
 def test() -> None:
