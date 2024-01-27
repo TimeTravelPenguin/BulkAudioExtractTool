@@ -61,6 +61,7 @@ pass_extract_context = click.make_pass_decorator(ExtractContext, ensure=True)
     multiple=True,
     type=RegexPattern,
     show_default=".*",
+    default=[".*"],
     help="Include files matching this pattern.",
 )
 @click.option(
@@ -68,7 +69,7 @@ pass_extract_context = click.make_pass_decorator(ExtractContext, ensure=True)
     "excludes",
     multiple=True,
     type=RegexPattern,
-    # show_default="$^",
+    show_default="$^",
     default=["$^"],
     help="Include files matching this pattern.",
 )
@@ -109,8 +110,8 @@ def extract(ctx: ExtractContext, includes: Sequence[Pattern], excludes: Sequence
 @baet_config()
 def input_file(input_: Path, output: Path) -> None:
     """Extract specific tracks from a video file."""
-    logger.info("Extracting audio tracks from video file: %r", input_)
-    logger.info("Extracting to: %r", output)
+    logger.info("Extracting audio tracks from video file: %s", input_)
+    logger.info("Extracting to: %s", output)
 
 
 @extract.command("dir")
@@ -133,8 +134,11 @@ def input_file(input_: Path, output: Path) -> None:
 @baet_config()
 def input_dir(input_: Path, output: Path) -> None:
     """Extract specific tracks from a video file."""
-    logger.info("Extracting audio tracks from video in dir: %r", input_)
-    logger.info("Extracting to directory: %r", output)
+    logger.info("Extracting audio tracks from video in dir: %s", input_)
+    logger.info("Extracting to directory: %s", output)
+
+    files = [str(f) for f in input_.iterdir() if f.is_file()]
+    logger.info("Directory files: %s", ", ".join(files))
 
 
 @extract.command("filter")
