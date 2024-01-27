@@ -6,7 +6,8 @@ from rich.repr import Result
 from rich.style import Style
 from rich.text import Text
 
-from ._config.theme import app_theme
+from BAET.theme import app_theme
+
 from .progress_status import ProgressStatus, ProgressStatusLiteral, ProgressStatusType
 
 
