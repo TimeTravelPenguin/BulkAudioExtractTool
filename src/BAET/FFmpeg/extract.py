@@ -3,12 +3,13 @@ from collections.abc import Generator, Iterator, MutableMapping
 from pathlib import Path
 from typing import Any
 
-import ffmpeg
-from ffmpeg import Stream
 from rich.console import Console, ConsoleOptions, Group, RenderResult
 from rich.padding import Padding
 from rich.prompt import Confirm
 from rich.table import Table
+
+import ffmpeg
+from ffmpeg import Stream
 
 from .._config.console import app_console, error_console
 from .._config.logging import create_logger

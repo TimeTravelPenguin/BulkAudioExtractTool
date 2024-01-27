@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 from enum import StrEnum
-from typing import Literal, TypeAlias
+from typing import Literal
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.repr import Result
 
-ProgressStatusLiteral: TypeAlias = Literal["Waiting", "Running", "Completed", "Error"]
+type ProgressStatusLiteral = Literal["Waiting", "Running", "Completed", "Error"]
 
 
 class ProgressStatus(StrEnum):
@@ -22,7 +20,7 @@ class ProgressStatus(StrEnum):
         yield repr(self)
 
 
-ProgressStatusType: TypeAlias = ProgressStatus | ProgressStatusLiteral
+type ProgressStatusType = ProgressStatus | ProgressStatusLiteral
 
 if __name__ == "__main__":
     import rich

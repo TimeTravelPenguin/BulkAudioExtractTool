@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeAlias
 
-import ffmpeg
 import rich
 import rich_click as click
 
+import ffmpeg
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
 

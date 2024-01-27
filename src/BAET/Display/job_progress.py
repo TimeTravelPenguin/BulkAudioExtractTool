@@ -1,9 +1,10 @@
-import ffmpeg
 from bidict import MutableBidirectionalMapping, bidict
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, Group, RenderResult
 from rich.highlighter import ReprHighlighter
 from rich.padding import Padding
 from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn, TimeRemainingColumn
+
+import ffmpeg
 
 from .._config.console import app_console
 from .._config.logging import create_logger
