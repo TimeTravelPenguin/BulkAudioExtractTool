@@ -11,6 +11,7 @@ import rich_click as click
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
 from BAET.cli.types import RegexPattern
+from BAET.constants import VIDEO_EXTENSIONS, VideoExtension
 
 logger = create_logger()
 
@@ -24,55 +25,17 @@ class ExtractContext:
     excludes: list[Pattern[str]] = field(default_factory=lambda: [re.compile("$^")])
 
 
-@dataclass()
+@dataclass(frozen=True)
 class ExtractJob:
-    def __init__(self) -> None:
-        self.input: Path = Path(".")
-        self.output: Path = Path(".")
-        self.includes: list[Pattern[str]] = []
-        self.excludes: list[Pattern[str]] = []
+    input_outputs: list[tuple[Path, Path]] = field(default_factory=lambda: [], hash=True)
+    includes: list[Pattern[str]] = field(default_factory=lambda: [], hash=True)
+    excludes: list[Pattern[str]] = field(default_factory=lambda: [], hash=True)
 
 
-class ExtractJobManager:
-    def __init__(self) -> None:
-        self._jobs: list[ExtractJob] = []
-
-    def get_jobs(self) -> list[ExtractJob]:
-        if not self._jobs:
-            return []
-
-        merged: set[ExtractJob] = {}
-        for idx, job in enumerate(self._jobs):
-            others = [other.input for other_idx, other in enumerate(self._jobs) if other_idx != idx]
-            if job.input in others:
-                pass
-
-    def next_job(self) -> None:
-        pass
+pass_extract_context = click.make_pass_decorator(ExtractJob, ensure=True)
 
 
-pass_extract_context = click.make_pass_decorator(ExtractContext, ensure=True)
-
-
-@click.group()
-@click.option(
-    "--include",
-    "includes",
-    multiple=True,
-    type=RegexPattern,
-    show_default=".*",
-    default=[".*"],
-    help="Include files matching this pattern.",
-)
-@click.option(
-    "--exclude",
-    "excludes",
-    multiple=True,
-    type=RegexPattern,
-    show_default="$^",
-    default=["$^"],
-    help="Include files matching this pattern.",
-)
+@click.group(chain=True, invoke_without_command=True)
 @click.option(
     "--dry-run",
     is_flag=True,
@@ -82,14 +45,15 @@ pass_extract_context = click.make_pass_decorator(ExtractContext, ensure=True)
 )
 @baet_config()
 @pass_extract_context
-def extract(ctx: ExtractContext, includes: Sequence[Pattern], excludes: Sequence[Pattern], dry_run: bool) -> None:
+def extract(ctx: ExtractJob, dry_run: bool) -> None:
     """Extract click command."""
-    ctx.dry_run = dry_run
+    pass
 
-    if includes:
-        logger.info("Include file patterns: %s", ", ".join([f'"{p.pattern}"' for p in includes]))
-    if excludes:
-        logger.info("Exclude file patterns: %s", ", ".join([f'"{p.pattern}"' for p in excludes]))
+
+@extract.result_callback()
+@pass_extract_context
+def process(ctx: ExtractJob, dry_run: bool):
+    pass
 
 
 @extract.command("file")
@@ -142,33 +106,47 @@ def input_dir(input_: Path, output: Path) -> None:
 
 
 @extract.command("filter")
+@click.option(
+    "--include",
+    "includes",
+    multiple=True,
+    type=RegexPattern,
+    show_default=".*",
+    default=[".*"],
+    help="Include files matching this pattern.",
+)
+@click.option(
+    "--exclude",
+    "excludes",
+    multiple=True,
+    type=RegexPattern,
+    show_default="$^",
+    default=["$^"],
+    help="Include files matching this pattern.",
+)
+@click.option(
+    "--ext",
+    "extensions",
+    help="Specify which video extensions to include in the directory.",
+    type=click.Choice(VIDEO_EXTENSIONS),
+    default=VIDEO_EXTENSIONS,
+)
 @baet_config()
 @pass_extract_context
-def filter_command(ctx: ExtractContext, includes: Sequence[Pattern[str]], excludes: Sequence[Pattern[str]]) -> None:
+def filter_command(
+    ctx: ExtractContext,
+    includes: Sequence[Pattern[str]],
+    excludes: Sequence[Pattern[str]],
+    extensions: Sequence[VideoExtension],
+) -> None:
     """Filter files for selection when providing a directory."""
+    # for extension in extensions:
+    #     ctx.includes.append(re.compile(f".*{extension}$"))
+    ctx.includes.append(re.compile(f".*({"|".join(extensions)})"))
     ctx.includes.extend(includes)
     ctx.excludes.extend(excludes)
 
-    for pattern in includes:
-        logger.info("Include pattern: %s", pattern)
-
-    for pattern in excludes:
-        logger.info("Exclude pattern: %s", pattern)
-
-
-if __name__ == "__main__":
-
-    class Test(Equatable):
-        def __init__(self, x) -> None:
-            super().__init__()
-            self.x = x
-
-        def __repr__(self) -> str:
-            return self.x
-
-    m = Merger(lambda t: t.x, lambda x, y: Test(x + y))
-    x = Test("one")
-    y = Test("two")
-    print(x)
-    print(y)
-    print(m([x, y, x]))
+    if includes:
+        logger.info("Include file patterns: %s", ", ".join([f'"{p.pattern}"' for p in includes]))
+    if excludes:
+        logger.info("Exclude file patterns: %s", ", ".join([f'"{p.pattern}"' for p in excludes]))
