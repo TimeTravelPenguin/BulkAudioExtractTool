@@ -1,8 +1,8 @@
 """Constants for BAET."""
 
-from collections.abc import Set
-from typing import Literal, TypeAlias
+from collections.abc import Sequence
+from typing import Literal
 
-VideoExtension: TypeAlias = Literal[".mp4", ".mkv", ".avi", ".webm"]
+type VideoExtension = Literal[".mp4", ".mkv", ".avi", ".webm"]
 
-VIDEO_EXTENSIONS: Set[str] = {".mp4", ".mkv", ".avi", ".webm"}
+VIDEO_EXTENSIONS: Sequence[VideoExtension] = [".mp4", ".mkv", ".avi", ".webm"]
