@@ -15,7 +15,7 @@ from .._config.console import app_console, error_console
 from .._config.logging import create_logger
 from ..app_args import AppArgs, InputFilters, OutputConfigurationOptions
 from ..constants import VIDEO_EXTENSIONS
-from ..Display.job_progress import FFmpegJobProgress
+from ..display.job_progress import FFmpegJobProgress
 from ..typing import AudioStream
 from .jobs import AudioExtractJob
 
