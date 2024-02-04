@@ -1,38 +1,49 @@
 """Extract click command."""
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from functools import wraps
 from pathlib import Path
 from re import Pattern
+from typing import Concatenate
 
 import rich_click as click
+from rich import print
 
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
 from BAET.cli.types import RegexPattern
-from BAET.constants import VIDEO_EXTENSIONS, VideoExtension
+from BAET.constants import VIDEO_EXTENSIONS_NO_DOT, VideoExtension_NoDot
 
 logger = create_logger()
 
 
 @dataclass()
-class ExtractContext:
-    """Extract command context information."""
-
-    dry_run: bool = False
-    includes: list[Pattern[str]] = field(default_factory=lambda: [re.compile(".*")])
-    excludes: list[Pattern[str]] = field(default_factory=lambda: [re.compile("$^")])
-
-
-@dataclass(frozen=True)
 class ExtractJob:
-    input_outputs: list[tuple[Path, Path]] = field(default_factory=lambda: [], hash=True)
-    includes: list[Pattern[str]] = field(default_factory=lambda: [], hash=True)
-    excludes: list[Pattern[str]] = field(default_factory=lambda: [], hash=True)
+    input_outputs: list[tuple[Path, Path]] = field(default_factory=lambda: [])
+    includes: list[Pattern[str]] = field(default_factory=lambda: [])
+    excludes: list[Pattern[str]] = field(default_factory=lambda: [])
 
 
 pass_extract_context = click.make_pass_decorator(ExtractJob, ensure=True)
+
+type ExtractJobProcessor[**P] = Callable[P, Callable[[ExtractJob], ExtractJob]]
+
+
+def processor[**P](
+    f: Callable[Concatenate[ExtractJob, P], ExtractJob],
+) -> ExtractJobProcessor[P]:
+    """Produce an `ExtractJob`-accepting function from a function that accepts multiple arguments."""
+
+    @wraps(f)
+    def new_func(*args: P.args, **kwargs: P.kwargs) -> Callable[[ExtractJob], ExtractJob]:
+        def _processor(job: ExtractJob) -> ExtractJob:
+            return f(job, *args, **kwargs)
+
+        return _processor
+
+    return new_func
 
 
 @click.group(chain=True, invoke_without_command=True)
@@ -44,16 +55,26 @@ pass_extract_context = click.make_pass_decorator(ExtractJob, ensure=True)
     help="Run without actually producing any output.",
 )
 @baet_config()
-@pass_extract_context
-def extract(ctx: ExtractJob, dry_run: bool) -> None:
+def extract(dry_run: bool) -> None:
     """Extract click command."""
     pass
 
 
 @extract.result_callback()
-@pass_extract_context
-def process(ctx: ExtractJob, dry_run: bool):
-    pass
+def process(processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: bool) -> None:
+    logger.info("Dry run: %s", dry_run)
+
+    job = ExtractJob()
+    for p in processors:
+        job = p(job)
+
+    for include in job.includes:
+        job.input_outputs = list(filter(lambda x: include.match(x[0].name), job.input_outputs))
+
+    for exclude in job.excludes:
+        job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
+
+    print(job)
 
 
 @extract.command("file")
@@ -72,10 +93,14 @@ def process(ctx: ExtractJob, dry_run: bool):
     type=click.Path(exists=False, resolve_path=True, path_type=Path),
 )
 @baet_config()
-def input_file(input_: Path, output: Path) -> None:
+@processor
+def input_file(job: ExtractJob, input_: Path, output: Path) -> ExtractJob:
     """Extract specific tracks from a video file."""
     logger.info("Extracting audio tracks from video file: %s", input_)
     logger.info("Extracting to: %s", output)
+
+    job.input_outputs.append((input_, output))
+    return job
 
 
 @extract.command("dir")
@@ -96,13 +121,17 @@ def input_file(input_: Path, output: Path) -> None:
     type=click.Path(exists=False, file_okay=False, resolve_path=True, path_type=Path),
 )
 @baet_config()
-def input_dir(input_: Path, output: Path) -> None:
+@processor
+def input_dir(job: ExtractJob, input_: Path, output: Path) -> ExtractJob:
     """Extract specific tracks from a video file."""
     logger.info("Extracting audio tracks from video in dir: %s", input_)
     logger.info("Extracting to directory: %s", output)
 
     files = [str(f) for f in input_.iterdir() if f.is_file()]
     logger.info("Directory files: %s", ", ".join(files))
+
+    job.input_outputs.extend([(f, output / f.name) for f in input_.iterdir() if f.is_file()])
+    return job
 
 
 @extract.command("filter")
@@ -111,8 +140,8 @@ def input_dir(input_: Path, output: Path) -> None:
     "includes",
     multiple=True,
     type=RegexPattern,
-    show_default=".*",
-    default=[".*"],
+    show_default=False,
+    default=[],
     help="Include files matching this pattern.",
 )
 @click.option(
@@ -120,33 +149,39 @@ def input_dir(input_: Path, output: Path) -> None:
     "excludes",
     multiple=True,
     type=RegexPattern,
-    show_default="$^",
-    default=["$^"],
-    help="Include files matching this pattern.",
+    show_default=False,
+    default=[],
+    help="Exclude files matching this pattern.",
 )
 @click.option(
     "--ext",
     "extensions",
     help="Specify which video extensions to include in the directory.",
-    type=click.Choice(VIDEO_EXTENSIONS),
-    default=VIDEO_EXTENSIONS,
+    multiple=True,
+    type=click.Choice(VIDEO_EXTENSIONS_NO_DOT, case_sensitive=False),
+    default=tuple(VIDEO_EXTENSIONS_NO_DOT),
 )
 @baet_config()
-@pass_extract_context
+@processor
 def filter_command(
-    ctx: ExtractContext,
+    job: ExtractJob,
     includes: Sequence[Pattern[str]],
     excludes: Sequence[Pattern[str]],
-    extensions: Sequence[VideoExtension],
-) -> None:
+    extensions: Sequence[VideoExtension_NoDot],
+) -> ExtractJob:
     """Filter files for selection when providing a directory."""
-    # for extension in extensions:
-    #     ctx.includes.append(re.compile(f".*{extension}$"))
-    ctx.includes.append(re.compile(f".*({"|".join(extensions)})"))
-    ctx.includes.extend(includes)
-    ctx.excludes.extend(excludes)
+    escaped_extensions = [re.escape(e) for e in extensions]
+    include_extensions = re.compile(rf".*({"|".join(escaped_extensions)})")
+
+    logger.info("Including files with extension: %s", ", ".join([f'"{e}"' for e in escaped_extensions]))
 
     if includes:
         logger.info("Include file patterns: %s", ", ".join([f'"{p.pattern}"' for p in includes]))
+
     if excludes:
         logger.info("Exclude file patterns: %s", ", ".join([f'"{p.pattern}"' for p in excludes]))
+
+    job.includes.append(include_extensions)
+    job.includes.extend(list(includes))
+    job.excludes.extend(list(excludes))
+    return job
