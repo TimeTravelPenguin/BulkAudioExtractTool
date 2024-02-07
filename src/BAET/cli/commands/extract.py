@@ -82,7 +82,7 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
 
     logger.info("Dry run: %s", dry_run)
 
-    job = ExtractJob()
+    job: ExtractJob = ExtractJob()
     for p in processors:
         job = p(job)
 
@@ -96,8 +96,13 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
     for exclude in job.excludes:
         job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
 
-    for file_in, file_out in job.input_outputs:
-        logger.info("Extracting %r to %r", file_in, file_out)
+    logger.info(
+        "Extracting: %s",
+        ", ".join(
+            f"\n{" " * 4}{file_in!r} -> {file_out.relative_to(file_in.parent)!r}"
+            for file_in, file_out in job.input_outputs
+        ),
+    )
 
     built = [build_job(io[0], io[1]) for io in job.input_outputs]
     run_synchronously(built)
@@ -124,7 +129,7 @@ def build_job(file: Path, out_path: Path) -> AudioExtractJob:
             indexed_outputs[stream_index] = (
                 ffmpeg.output(
                     ffmpeg_input[f"a:{idx}"],
-                    str(output_path),
+                    f"{output_path.resolve().as_posix().replace(" ", r"\ ")}",
                     acodec="pcm_s16le",
                     audio_bitrate=sample_rate,
                 )

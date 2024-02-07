@@ -85,6 +85,8 @@ class FFmpegJobProgress(ConsoleRenderable):
 
         output = self.job.stream_indexed_outputs[stream_index]
 
+        logger.info("Running: %s", " ".join(ffmpeg.get_args(output)))
+
         proc = ffmpeg.run_async(
             output,
             pipe_stdout=True,
@@ -102,9 +104,9 @@ class FFmpegJobProgress(ConsoleRenderable):
                             completed=float(val),
                         )
 
-            if p.returncode != 0:
+            if proc.wait() != 0:
                 raise RuntimeError(p.stderr.read().decode("utf-8"))  # type: ignore
-        except RuntimeError as e:
+        except (RuntimeError, ValueError) as e:
             logger.critical("%s: %s", type(e).__name__, e)
             raise e
 
@@ -118,8 +120,9 @@ class FFmpegJobProgress(ConsoleRenderable):
 
             try:
                 self._run_task(task)
+                self._stream_task_progress.update(task, completed=self._stream_task_progress.tasks[task].total)
                 self._stream_task_progress.update(task, status="[bold green]Complete[/]")
-            except RuntimeError:
+            except (RuntimeError, ValueError):
                 self._stream_task_progress.update(task, status="[bold red]ERROR[/]")
             finally:
                 self._stream_task_progress.stop_task(task)

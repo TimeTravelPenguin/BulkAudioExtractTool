@@ -3,6 +3,7 @@
 import re
 from collections.abc import Sequence
 from fractions import Fraction
+from logging import Logger
 from pathlib import Path
 from typing import overload
 
@@ -10,9 +11,12 @@ import rich.repr
 from more_itertools import first_true
 
 import ffmpeg
+from BAET._config.logging import create_logger
 from BAET.cli.types import FFmpegArgsRepr
+from BAET.typing import AudioStream, FFmpegOutput, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
+from BAET.utils import micro_to_hhmmss
 
-from ..typing import AudioStream, FFmpegOutput, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
+logger: Logger = create_logger()
 
 
 @rich.repr.auto()
@@ -85,7 +89,10 @@ class JobMetadata:
         self.stream_indexed_output_map = stream_indexed_output_map
 
         if self.stream_indexed_output_map is not None:
-            self.audio_stream_indexes, self.job_outputs = zip(*self.stream_indexed_output_map.items())
+            self.audio_stream_indexes, self.job_outputs = zip(
+                *self.stream_indexed_output_map.items(),
+                strict=True,
+            )
             return
 
         if self.audio_stream_indexes is None or self.job_outputs is None:
@@ -93,14 +100,20 @@ class JobMetadata:
                 "Either `audio_stream_indexes` and `job_outputs` or `stream_indexed_output_map` must be provided"
             )
 
-        self.stream_indexed_output_map = dict(zip(self.audio_stream_indexes, self.job_outputs))
+        self.stream_indexed_output_map = dict(
+            zip(
+                self.audio_stream_indexes,
+                self.job_outputs,
+                strict=True,
+            )
+        )
 
 
 class AudioExtractJob:
     def __init__(
         self,
         input_file: Path,
-        audio_streams: list[AudioStream],
+        audio_streams: Sequence[AudioStream],
         indexed_outputs: IndexedOutputs,
     ):
         self.input_file: Path = input_file
@@ -117,6 +130,14 @@ class AudioExtractJob:
             stream["index"]: self.stream_duration_ms(stream) for stream in audio_streams
         }
 
+        logger.info(
+            "Parsed duration for %r: %s",
+            self.input_file,
+            ", ".join(
+                f"\n{" " * 4}Stream index {k}: {v} ({micro_to_hhmmss(v)})" for k, v in self.durations_ms_dict.items()
+            ),
+        )
+
     def __rich_repr__(self) -> rich.repr.Result:
         yield "input_file", self.input_file
         yield "indexed_audio_streams", self.indexed_audio_streams
@@ -127,7 +148,7 @@ class AudioExtractJob:
         )
 
     @classmethod
-    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond | None:
+    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond:
         if "duration_ts" in stream:
             # Convert the duration from seconds to microseconds
             return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
@@ -169,7 +190,7 @@ if __name__ == "__main__":
     meta = JobMetadata(
         input_file=Path("in"),
         output_dir=Path("out"),
-        stream_indexed_output_map={x: f"Job {x:02d}" for x in range(1, 5)},
+        stream_indexed_output_map={x: f"Job {x:02d}" for x in range(1, 5)},  # type: ignore
     )
 
     rich.print(meta)
