@@ -1,5 +1,6 @@
 """Jobs that encapsulate work to be done by FFmpeg."""
 
+import re
 from collections.abc import Sequence
 from fractions import Fraction
 from pathlib import Path
@@ -114,8 +115,30 @@ class AudioExtractJob:
         }
 
     @classmethod
-    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond:
-        return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
+    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond | None:
+        if "duration_ts" in stream:
+            # Convert the duration from seconds to microseconds
+            return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
+        elif "tags" in stream:
+            _, duration = first_true(
+                stream["tags"].items(),
+                pred=lambda x: x[0].lower() == "duration",
+                default=(None, None),
+            )
+
+            if duration is None:
+                raise ValueError(f"Could not find duration in {stream!r}")
+
+            # Get the duration via regex. .strptime() has leftover data
+            pattern = re.compile(r"(?P<H>\d+):(?P<M>\d+):(?P<S>\d+(?:\.\d+)?)")
+            match = pattern.match(duration)
+            if match:
+                h, m, s = match.group("H", "M", "S")
+                return 1_000_000 * (float(h) * 3600 + float(m) * 60 + float(s))
+            else:
+                raise ValueError(f"Could not parse duration from {duration!r}")
+
+        raise ValueError(f"Could not find duration in {stream!r}")
 
     def stream(self, index: StreamIndex) -> AudioStream:
         stream: AudioStream | None = first_true(
