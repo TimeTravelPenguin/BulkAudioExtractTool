@@ -5,11 +5,10 @@ from rich.padding import Padding
 from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
 import ffmpeg
-
-from .._config.console import app_console
-from .._config.logging import create_logger
-from ..FFmpeg.jobs import AudioExtractJob
-from ..typing import StreamTaskBiMap
+from BAET._config.console import app_console
+from BAET._config.logging import create_logger
+from BAET.FFmpeg.jobs import AudioExtractJob
+from BAET.typing import StreamTaskBiMap
 
 logger = create_logger()
 

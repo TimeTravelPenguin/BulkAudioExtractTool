@@ -1,7 +1,7 @@
 """Typing definitions for BAET."""
 
 from collections.abc import Mapping
-from typing import Any, TypeAlias
+from typing import Any
 
 from bidict import BidirectionalMapping
 from rich.progress import TaskID
@@ -9,14 +9,14 @@ from rich.progress import TaskID
 from ffmpeg import Stream
 
 # Numbers
-Millisecond: TypeAlias = int | float
+type Millisecond = int | float
 
 # FFmpeg
-StreamIndex: TypeAlias = int
-AudioStream: TypeAlias = dict[str, Any]
-FFmpegOutput: TypeAlias = Stream
+type StreamIndex = int
+type AudioStream = dict[str, Any]
+type FFmpegOutput = Stream
 
 # Mappings
-IndexedOutputs: TypeAlias = Mapping[StreamIndex, FFmpegOutput]
-IndexedAudioStream: TypeAlias = Mapping[StreamIndex, AudioStream]
-StreamTaskBiMap: TypeAlias = BidirectionalMapping[StreamIndex, TaskID]
+type IndexedOutputs = Mapping[StreamIndex, FFmpegOutput]
+type IndexedAudioStream = Mapping[StreamIndex, AudioStream]
+type StreamTaskBiMap = BidirectionalMapping[StreamIndex, TaskID]
