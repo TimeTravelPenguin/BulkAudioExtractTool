@@ -34,7 +34,3 @@ cli.add_command(probe.probe)
 def test() -> None:
     """Test the CLI."""
     cli()
-
-
-if __name__ == "__main__":
-    test()
