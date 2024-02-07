@@ -115,7 +115,7 @@ def configure_logging(*, enable_logging: bool = True, file_out: Path | None = No
         The file to write logs to, by default None
     """
     if not enable_logging:
-        logging.disable(logging.CRITICAL)
+        logging.disable(logging.INFO)
 
     if file_out is not None:
         handler = FileHandler(filename=file_out)

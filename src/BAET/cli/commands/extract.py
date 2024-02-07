@@ -173,13 +173,13 @@ def filter_command(
     escaped_extensions = [re.escape(e) for e in extensions]
     include_extensions = re.compile(rf".*({"|".join(escaped_extensions)})")
 
-    logger.info("Including files with extension: %s", ", ".join([f'"{e}"' for e in escaped_extensions]))
+    logger.info("Including files with extension: %r", ", ".join([f'"{e}"' for e in escaped_extensions]))
 
     if includes:
-        logger.info("Include file patterns: %s", ", ".join([f'"{p.pattern}"' for p in includes]))
+        logger.info("Include file patterns: %r", ", ".join([f'"{p.pattern}"' for p in includes]))
 
     if excludes:
-        logger.info("Exclude file patterns: %s", ", ".join([f'"{p.pattern}"' for p in excludes]))
+        logger.info("Exclude file patterns: %r", ", ".join([f'"{p.pattern}"' for p in excludes]))
 
     job.includes.append(include_extensions)
     job.includes.extend(list(includes))

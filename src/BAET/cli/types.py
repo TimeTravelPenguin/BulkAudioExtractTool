@@ -7,6 +7,7 @@ from re import Pattern
 from typing import Any, Protocol, override, runtime_checkable
 
 import rich_click as click
+from rich.repr import Result
 
 
 class RegexPatternParamType(click.ParamType):
@@ -71,3 +72,17 @@ class Merger[T: Equatable, K: Equatable]:
             merged[key] = self._composer(merged[key], item)
 
         return list(merged.values())
+
+
+class FFmpegArgsRepr:
+    """A class to represent FFmpeg arguments for rich pretty-printy."""
+
+    def __init__(self, args: list[str]) -> None:
+        self.args = args
+
+    def __rich_repr__(self) -> Result:
+        """Rich representation of the object."""
+        yield self.args
+
+
+FFmpegArgsRepr.__name__ = "FFmpeg"

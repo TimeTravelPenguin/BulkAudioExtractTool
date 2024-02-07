@@ -81,7 +81,7 @@ class FFmpegJobProgress(ConsoleRenderable):
     def _run_task(self, task: TaskID) -> None:
         stream_index: int = self._stream_task_bimap.inverse[task]
 
-        logger.info(f"Extracting audio stream {stream_index} of {self.job.input_file.name}")
+        logger.info("Extracting audio stream %d of %r", stream_index, self.job.input_file.name)
 
         output = self.job.stream_indexed_outputs[stream_index]
 
@@ -93,7 +93,7 @@ class FFmpegJobProgress(ConsoleRenderable):
 
         try:
             with proc as p:
-                for line in p.stdout:
+                for line in p.stdout:  # type: ignore
                     decoded = line.decode("utf-8").strip()
                     if "out_time_ms" in decoded:
                         val = decoded.split("=", 1)[1]
@@ -103,15 +103,14 @@ class FFmpegJobProgress(ConsoleRenderable):
                         )
 
             if p.returncode != 0:
-                raise RuntimeError(p.stderr.read().decode("utf-8"))
-
+                raise RuntimeError(p.stderr.read().decode("utf-8"))  # type: ignore
         except RuntimeError as e:
             logger.critical("%s: %s", type(e).__name__, e)
             raise e
 
     def start(self) -> None:
         self._overall_progress.start_task(self._overall_progress_task)
-        logger.info(f"Stream index to job task ID bimap: {self._stream_task_bimap}")
+        logger.info("Stream index to job task ID bimap: %r", self._stream_task_bimap)
         for task in self._stream_task_bimap.values():
             self._stream_task_progress.start_task(task)
 
