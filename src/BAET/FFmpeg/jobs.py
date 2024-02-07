@@ -31,7 +31,7 @@ class JobMetadata:
         *,
         audio_stream_indexes: Sequence[StreamIndex],
         job_outputs: Sequence[FFmpegOutput],
-    ):
+    ) -> None:
         ...
 
     @overload
@@ -41,7 +41,7 @@ class JobMetadata:
         output_dir: Path,
         *,
         stream_indexed_output_map: IndexedOutputs,
-    ):
+    ) -> None:
         ...
 
     def __init__(
@@ -115,7 +115,7 @@ class AudioExtractJob:
         input_file: Path,
         audio_streams: Sequence[AudioStream],
         indexed_outputs: IndexedOutputs,
-    ):
+    ) -> None:
         self.input_file: Path = input_file
         self.stream_indexed_outputs: IndexedOutputs = indexed_outputs
         self.audio_streams = audio_streams

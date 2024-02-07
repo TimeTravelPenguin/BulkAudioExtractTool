@@ -179,7 +179,7 @@ def run_synchronously(jobs: list[AudioExtractJob]) -> None:
 )
 @baet_config()
 @processor
-def input_file(job: ExtractJob, input_: Path, output: Path, filetype: str) -> ExtractJob:
+def input_file(job: ExtractJob, input_: Path, output: Path | None, filetype: str | None) -> ExtractJob:
     """Extract specific tracks from a video file."""
     if filetype is not None and not filetype.startswith("."):
         filetype = f".{filetype}"
@@ -228,7 +228,7 @@ def input_file(job: ExtractJob, input_: Path, output: Path, filetype: str) -> Ex
 )
 @baet_config()
 @processor
-def input_dir(job: ExtractJob, input_: Path, output: Path, filetype: str) -> ExtractJob:
+def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str) -> ExtractJob:
     """Extract specific tracks from a video file."""
     if output is None:
         output = input_ / "outputs"

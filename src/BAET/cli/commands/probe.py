@@ -4,7 +4,7 @@ from collections import ChainMap, OrderedDict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypeAlias
+from typing import Any
 
 import rich
 import rich_click as click
@@ -15,7 +15,7 @@ from BAET.cli.help_configuration import baet_config
 
 logger = create_logger()
 
-_key_selector: TypeAlias = Callable[[dict[str, Any]], dict[str, Any]]
+type _key_selector = Callable[[dict[str, Any]], dict[str, Any]]
 
 
 @dataclass()

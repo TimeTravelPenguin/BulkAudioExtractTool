@@ -64,7 +64,7 @@ def can_write_file(file: Path, has_overwrite_permission: bool) -> bool:
 
 
 class FileSourceDirectory:
-    def __init__(self, directory: Path, filters: InputFilters):
+    def __init__(self, directory: Path, filters: InputFilters) -> None:
         if not directory.is_dir():
             raise NotADirectoryError(directory)  # FIXME: Is this right?
 
@@ -96,7 +96,7 @@ class MultitrackAudioBulkExtractorJobs:
         output_dir: Path,
         filters: InputFilters,
         output_configuration: OutputConfigurationOptions,
-    ):
+    ) -> None:
         self._input_dir = input_dir
         self._output_dir = output_dir
         self._filters = filters

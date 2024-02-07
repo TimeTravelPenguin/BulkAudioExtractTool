@@ -15,7 +15,7 @@ logger = create_logger()
 
 class FFmpegJobProgress(ConsoleRenderable):
     # TODO: Need mediator to consumer/producer printing
-    def __init__(self, job: AudioExtractJob):
+    def __init__(self, job: AudioExtractJob) -> None:
         self.job = job
 
         bar_blue = "#5079AF"

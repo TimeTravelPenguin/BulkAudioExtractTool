@@ -27,7 +27,7 @@ class ProgressStyle:
         running_style: str | Style | None = None,
         completed_style: str | Style | None = None,
         error_style: str | Style | None = None,
-    ):
+    ) -> None:
         default_style_dict: dict[ProgressStatus, Style] = {
             key: parse_style(value or default)
             for key, value, default in [
