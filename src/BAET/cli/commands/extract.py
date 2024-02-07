@@ -1,7 +1,7 @@
 """Extract click command."""
 
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from functools import wraps
 from pathlib import Path
@@ -9,12 +9,22 @@ from re import Pattern
 from typing import Concatenate
 
 import rich_click as click
-from rich import print
+from rich.console import Group
+from rich.live import Live
+from rich.padding import Padding
+from rich.table import Table
 
+import ffmpeg
+from BAET._config.console import app_console
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
 from BAET.cli.types import RegexPattern
-from BAET.constants import VIDEO_EXTENSIONS_NO_DOT, VideoExtension_NoDot
+from BAET.constants import AUDIO_EXTENSIONS, VIDEO_EXTENSIONS_NO_DOT, VideoExtension_NoDot
+from BAET.display.job_progress import FFmpegJobProgress
+from BAET.FFmpeg.jobs import AudioExtractJob
+from BAET.FFmpeg.utils import probe_audio_streams
+from BAET.typing import AudioStream
+from ffmpeg import Stream
 
 logger = create_logger()
 
@@ -61,12 +71,24 @@ def extract(dry_run: bool) -> None:
 
 
 @extract.result_callback()
-def process(processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: bool) -> None:
+@click.pass_context
+def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: bool) -> None:
+    app_console.print(
+        "[bold red]This application is currently still in development.",
+        "[bold red]Any generated files will overwrite existing files with the same name.",
+        end="\n\n",
+    )
+    # click.confirm("Do you want to continue?", abort=True)
+
     logger.info("Dry run: %s", dry_run)
 
     job = ExtractJob()
     for p in processors:
         job = p(job)
+
+    if not job.includes or not job.excludes:
+        default_filter = ctx.invoke(filter_command)
+        job = default_filter(job)
 
     for include in job.includes:
         job.input_outputs = list(filter(lambda x: include.match(x[0].name), job.input_outputs))
@@ -74,7 +96,56 @@ def process(processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: b
     for exclude in job.excludes:
         job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
 
-    print(job)
+    for file_in, file_out in job.input_outputs:
+        logger.info("Extracting %r to %r", file_in, file_out)
+
+    built = [build_job(io[0], io[1]) for io in job.input_outputs]
+    run_synchronously(built)
+    # todo: process job
+
+
+def build_job(file: Path, out_path: Path) -> AudioExtractJob:
+    audio_streams: list[AudioStream] = []
+    indexed_outputs: MutableMapping[int, Stream] = {}
+
+    file = file.expanduser()
+    with probe_audio_streams(file) as streams:
+        for idx, stream in enumerate(streams):
+            ffmpeg_input = ffmpeg.input(str(file))
+            stream_index = stream["index"]
+            output_path = out_path.with_stem(f"{out_path.stem}_track{stream_index}")
+            sample_rate = stream.get(
+                "sample_rate",
+                44100,
+            )
+
+            audio_streams.append(stream)
+
+            indexed_outputs[stream_index] = (
+                ffmpeg.output(
+                    ffmpeg_input[f"a:{idx}"],
+                    str(output_path),
+                    acodec="pcm_s16le",
+                    audio_bitrate=sample_rate,
+                )
+                .overwrite_output()
+                .global_args("-progress", "-", "-nostats")
+            )
+
+    return AudioExtractJob(file, audio_streams, indexed_outputs)
+
+
+def run_synchronously(jobs: list[AudioExtractJob]) -> None:
+    display = Table.grid()
+
+    job_progresses = [FFmpegJobProgress(job) for job in jobs]
+    display.add_row(Padding(Group(*job_progresses), pad=(1, 2)))
+
+    logger.info("Starting synchronous execution of queued jobs")
+    with Live(display, console=app_console):
+        for progress in job_progresses:
+            logger.info("Starting job %r", {progress.job.input_file})
+            progress.start()
 
 
 @extract.command("file")
@@ -91,15 +162,38 @@ def process(processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: b
     "-o",
     help="The output file or directory to output to.",
     type=click.Path(exists=False, resolve_path=True, path_type=Path),
+    default=None,
+)
+@click.option(
+    "--filetype",
+    "-f",
+    help="The output filetype.",
+    required=False,
+    type=click.Choice(tuple(AUDIO_EXTENSIONS), case_sensitive=False),
+    default=None,
 )
 @baet_config()
 @processor
-def input_file(job: ExtractJob, input_: Path, output: Path) -> ExtractJob:
+def input_file(job: ExtractJob, input_: Path, output: Path, filetype: str) -> ExtractJob:
     """Extract specific tracks from a video file."""
-    logger.info("Extracting audio tracks from video file: %s", input_)
-    logger.info("Extracting to: %s", output)
+    if filetype is not None and not filetype.startswith("."):
+        filetype = f".{filetype}"
 
-    job.input_outputs.append((input_, output))
+    if output is None:
+        out = input_.with_suffix(filetype or ".wav")
+    elif output.is_file():
+        if filetype:
+            logger.warning("Provided a file output and filetype, ignoring filetype.")
+        out = output
+    elif output.is_dir():
+        out = output / input_.with_suffix(filetype or ".wav").name
+    else:
+        raise click.BadParameter(f"Invalid output path: {output!r}", param_hint="output")
+
+    logger.info("Extracting audio tracks from video file: %r", input_)
+    logger.info("Extracting to: %r", out)
+
+    job.input_outputs.append((input_, out))
     return job
 
 
@@ -116,21 +210,32 @@ def input_file(job: ExtractJob, input_: Path, output: Path) -> ExtractJob:
     "--output",
     "-o",
     help="The output directory.",
-    default=Path("./outputs"),
-    show_default="./outputs",
+    default=None,
+    show_default="{input parent}/outputs",
     type=click.Path(exists=False, file_okay=False, resolve_path=True, path_type=Path),
+)
+@click.option(
+    "--filetype",
+    "-f",
+    help="The output filetype.",
+    type=click.Choice(tuple(AUDIO_EXTENSIONS), case_sensitive=False),
+    default="wav",
 )
 @baet_config()
 @processor
-def input_dir(job: ExtractJob, input_: Path, output: Path) -> ExtractJob:
+def input_dir(job: ExtractJob, input_: Path, output: Path, filetype: str) -> ExtractJob:
     """Extract specific tracks from a video file."""
-    logger.info("Extracting audio tracks from video in dir: %s", input_)
-    logger.info("Extracting to directory: %s", output)
+    if output is None:
+        output = input_ / "outputs"
 
-    files = [str(f) for f in input_.iterdir() if f.is_file()]
-    logger.info("Directory files: %s", ", ".join(files))
+    logger.info("Extracting audio tracks from video in dir: %r", input_)
+    logger.info("Extracting to directory: %r", output)
+    logger.info("Extracting to filetype: %r", filetype)
 
-    job.input_outputs.extend([(f, output / f.name) for f in input_.iterdir() if f.is_file()])
+    if not filetype.startswith("."):
+        filetype = f".{filetype}"
+
+    job.input_outputs.extend([(f, output / f.with_suffix(filetype).name) for f in input_.iterdir() if f.is_file()])
     return job
 
 
