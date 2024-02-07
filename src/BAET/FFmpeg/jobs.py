@@ -9,6 +9,9 @@ from typing import overload
 import rich.repr
 from more_itertools import first_true
 
+import ffmpeg
+from BAET.cli.types import FFmpegArgsRepr
+
 from ..typing import AudioStream, FFmpegOutput, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
 
 
@@ -113,6 +116,15 @@ class AudioExtractJob:
         self.durations_ms_dict: dict[StreamIndex, Millisecond] = {
             stream["index"]: self.stream_duration_ms(stream) for stream in audio_streams
         }
+
+    def __rich_repr__(self) -> rich.repr.Result:
+        yield "input_file", self.input_file
+        yield "indexed_audio_streams", self.indexed_audio_streams
+        yield "durations_ms_dict", self.durations_ms_dict
+        yield (
+            "stream_indexed_outputs",
+            {k: FFmpegArgsRepr(ffmpeg.get_args(v)) for k, v in self.stream_indexed_outputs.items()},
+        )
 
     @classmethod
     def stream_duration_ms(cls, stream: AudioStream) -> Millisecond | None:
