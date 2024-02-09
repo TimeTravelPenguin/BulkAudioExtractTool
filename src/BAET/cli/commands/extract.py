@@ -90,11 +90,15 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
         default_filter = ctx.invoke(filter_command)
         job = default_filter(job)
 
+    logger.info("Prefiltered inputs: %s", ", ".join(f"\n{" " * 4}{file_in!r}" for file_in, _ in job.input_outputs))
+
     for include in job.includes:
         job.input_outputs = list(filter(lambda x: include.match(x[0].name), job.input_outputs))
 
     for exclude in job.excludes:
         job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
+
+    logger.info("Filtered inputs: %s", ", ".join(f"\n{" " * 4}{file_in!r}" for file_in, _ in job.input_outputs))
 
     logger.info(
         "Extracting: %s",
@@ -106,7 +110,7 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
 
     built = [build_job(io[0], io[1]) for io in job.input_outputs]
     run_synchronously(built)
-    # todo: process job
+    logger.info("Finished extracting.")
 
 
 def build_job(file: Path, out_path: Path) -> AudioExtractJob:
