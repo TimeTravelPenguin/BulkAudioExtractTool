@@ -14,7 +14,7 @@ logger = create_logger()
 file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
-@click.group()
+@click.group("baet")
 @baet_config(use_markdown=True)
 @click.version_option(prog_name="BAET", package_name="BAET", message="%(prog)s v%(version)s")
 @click.option("--logging", "-L", is_flag=True, help="Run the application with logging.")
