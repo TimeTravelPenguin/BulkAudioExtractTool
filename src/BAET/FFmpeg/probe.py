@@ -18,7 +18,7 @@ logger = create_logger()
 @contextlib.contextmanager
 def probe_file(file: Path) -> Iterator[dict[str, Any]]:
     """Probe a file using FFmpeg."""
-    logger.info('Probing file "%r"', file)
+    logger.info("Probing file %r", file)
 
     try:
         probed: dict[str, Any] = ffmpeg.probe(file)
@@ -33,7 +33,7 @@ def probe_file(file: Path) -> Iterator[dict[str, Any]]:
 def probe_audio_streams(file: Path) -> Iterator[list[AudioStream]]:
     """Probe the audio streams of a file."""
     try:
-        logger.info('Probing file "%s"', file)
+        logger.info("Probing file %r", file)
         probe = ffmpeg.probe(file)
 
         audio_streams = sorted(
