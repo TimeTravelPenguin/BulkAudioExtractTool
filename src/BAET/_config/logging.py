@@ -5,13 +5,18 @@ from functools import wraps
 from logging import FileHandler, Logger
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Concatenate
 
 from rich.logging import RichHandler
 
 from .console import app_console
 
-rich_handler = RichHandler(rich_tracebacks=True, console=app_console)
+rich_handler = RichHandler(
+    rich_tracebacks=True,
+    tracebacks_show_locals=True,
+    console=app_console,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(threadName)s: %(message)s",
@@ -22,13 +27,16 @@ logging.basicConfig(
 app_logger = logging.getLogger("app_logger")
 
 
-def pass_module(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator that passes the module name to the decorated function."""
+def pass_module[**P](func: Callable[Concatenate[ModuleType, P], Logger]) -> Callable[P, Logger]:
+    """Decorate a function, passing the module of the caller as the first argument of the decorated function."""
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
 
+    if module is None:
+        raise RuntimeError("Could not inspect module")
+
     @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
         return func(module, *args, **kwargs)
 
     return wrapper
@@ -57,7 +65,7 @@ def find_module_logger(module: ModuleType) -> Logger:
 
     Returns
     -------
-    Logger | None
+    Logger
         The logger for the module, or None if it doesn't exist.
 
     Raises
@@ -74,7 +82,7 @@ def find_module_logger(module: ModuleType) -> Logger:
 
 
 def pass_logger(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Passes the modules logger to the decorated function, if it exists. Otherwise, uses the root logger.
+    """Pass the modules logger to the decorated function, if it exists. Otherwise, uses the root logger.
 
     Parameters
     ----------

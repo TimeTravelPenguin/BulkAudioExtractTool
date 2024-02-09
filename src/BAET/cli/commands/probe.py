@@ -9,9 +9,9 @@ from typing import Any
 import rich
 import rich_click as click
 
-import ffmpeg
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
+from BAET.FFmpeg.probe import probe_file
 
 logger = create_logger()
 
@@ -29,18 +29,13 @@ class ProbeContext:
 
 
 def _probe_file(file: Path) -> dict[str, Any]:
-    logger.info('Probing file "%s"', file)
+    probed_dict: OrderedDict[str, Any]
+    with probe_file(file) as probed:
+        if "format" in probed:
+            probed_dict = OrderedDict(probed)
+            probed_dict.move_to_end("format", last=False)
 
-    try:
-        probed: OrderedDict[str, Any] = OrderedDict(ffmpeg.probe(file))
-    except ffmpeg.Error as e:
-        err: str = e.stderr.decode()
-        raise click.ClickException(f"Error probing file {err.strip().splitlines()[-1]}") from e
-
-    if "format" in probed:
-        probed.move_to_end("format", last=False)
-
-    return dict(probed)
+        return dict(probed)
 
 
 @click.group(chain=True, invoke_without_command=True)
@@ -53,8 +48,6 @@ def probe(file: Path) -> None:
 @probe.result_callback()
 def probe_result_callback(commands: list[_key_selector], file: Path) -> None:
     """Run the probe command."""
-    logger.info("Running probe result_callback.")
-
     probed: dict[str, Any] = _probe_file(file)
 
     if not commands:
@@ -78,13 +71,20 @@ def probe_result_callback(commands: list[_key_selector], file: Path) -> None:
     "--format/--no-format",
     "-f/-nf",
     "format_",
-    default=True,
-    show_default="Enabled",
+    is_flag=True,
+    default=None,
+    show_default="Disabled if --audio is specified.",
     help="Include/Exclude format metadata.",
 )
 def probe_filter(audio: tuple[int, ...], format_: bool | None) -> _key_selector:
     """Specify which audio streams to probe."""
-    logger.info("Called stream with: %s", audio)
+    if audio and format_ is None:
+        format_ = False
+    elif not audio and format_ is None:
+        format_ = True
+
+    logger.info("Filtering streams with index: %r", audio)
+    logger.info("Including format information: %s", format_)
 
     def processor(meta: dict[str, Any]) -> Any:
         if "streams" not in meta:

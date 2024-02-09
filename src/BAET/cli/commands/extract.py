@@ -8,32 +8,38 @@ from pathlib import Path
 from re import Pattern
 from typing import Concatenate
 
+import rich.repr
 import rich_click as click
 from rich.console import Group
 from rich.live import Live
 from rich.padding import Padding
+from rich.pretty import pretty_repr
 from rich.table import Table
 
 import ffmpeg
 from BAET._config.console import app_console
 from BAET._config.logging import create_logger
 from BAET.cli.help_configuration import baet_config
-from BAET.cli.types import RegexPattern
 from BAET.constants import AUDIO_EXTENSIONS, VIDEO_EXTENSIONS_NO_DOT, VideoExtension_NoDot
 from BAET.display.job_progress import FFmpegJobProgress
 from BAET.FFmpeg.jobs import AudioExtractJob
-from BAET.FFmpeg.utils import probe_audio_streams
+from BAET.FFmpeg.probe import probe_audio_streams
+from BAET.helpers.string_helpers import pretty_join
 from BAET.typing import AudioStream
 from ffmpeg import Stream
 
 logger = create_logger()
 
 
+@rich.repr.auto()
 @dataclass()
 class ExtractJob:
+    """Dataclass for holding extract job information."""
+
     input_outputs: list[tuple[Path, Path]] = field(default_factory=lambda: [])
     includes: list[Pattern[str]] = field(default_factory=lambda: [])
     excludes: list[Pattern[str]] = field(default_factory=lambda: [])
+    include_extensions: list[Pattern[str]] = field(default_factory=lambda: [])
 
 
 pass_extract_context = click.make_pass_decorator(ExtractJob, ensure=True)
@@ -73,12 +79,13 @@ def extract(dry_run: bool) -> None:
 @extract.result_callback()
 @click.pass_context
 def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: bool) -> None:
+    """Process the extract command."""
     app_console.print(
         "[bold red]This application is currently still in development.",
         "[bold red]Any generated files will overwrite existing files with the same name.",
         end="\n\n",
     )
-    # click.confirm("Do you want to continue?", abort=True)
+    click.confirm("Do you want to continue?", abort=True)
 
     logger.info("Dry run: %s", dry_run)
 
@@ -86,11 +93,12 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
     for p in processors:
         job = p(job)
 
-    if not job.includes or not job.excludes:
-        default_filter = ctx.invoke(filter_command)
+    if not job.include_extensions:
+        default_filter = ctx.invoke(filter_command, extensions=[re.escape(e) for e in VIDEO_EXTENSIONS_NO_DOT])
         job = default_filter(job)
 
-    logger.info("Prefiltered inputs: %s", ", ".join(f"\n{" " * 4}{file_in!r}" for file_in, _ in job.input_outputs))
+    logger.debug("Job (Prefiltered Inputs)::\n%s", pretty_repr(job))
+    logger.info(pretty_join(job.input_outputs, "Prefiltered inputs", formatter=lambda inout: f"{inout[0]!r}"))
 
     for include in job.includes:
         job.input_outputs = list(filter(lambda x: include.match(x[0].name), job.input_outputs))
@@ -98,18 +106,25 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
     for exclude in job.excludes:
         job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
 
-    logger.info("Filtered inputs: %s", ", ".join(f"\n{" " * 4}{file_in!r}" for file_in, _ in job.input_outputs))
+    for extension in job.include_extensions:
+        job.input_outputs = list(filter(lambda x: extension.match(x[0].name), job.input_outputs))
+
+    logger.debug("Job (Filtered Inputs):\n%s", pretty_repr(job))
+    logger.info(pretty_join(job.input_outputs, "Filtered inputs", formatter=lambda inout: f"{inout[0]!r}"))
 
     logger.info(
-        "Extracting: %s",
-        ", ".join(
-            f"\n{" " * 4}{file_in!r} -> {file_out.relative_to(file_in.parent)!r}"
-            for file_in, file_out in job.input_outputs
-        ),
+        pretty_join(
+            job.input_outputs,
+            "Extracting",
+            formatter=lambda inout: f"{inout[0]!r} -> {inout[1].relative_to(inout[0].parent)!r}",
+        )
     )
 
     built = [build_job(io[0], io[1]) for io in job.input_outputs]
-    run_synchronously(built)
+
+    if not dry_run:
+        run_synchronously(built)
+
     logger.info("Finished extracting.")
 
 
@@ -178,7 +193,7 @@ def run_synchronously(jobs: list[AudioExtractJob]) -> None:
     "-f",
     help="The output filetype.",
     required=False,
-    type=click.Choice(tuple(AUDIO_EXTENSIONS), case_sensitive=False),
+    type=click.Choice(AUDIO_EXTENSIONS, case_sensitive=False),
     default=None,
 )
 @baet_config()
@@ -227,7 +242,7 @@ def input_file(job: ExtractJob, input_: Path, output: Path | None, filetype: str
     "--filetype",
     "-f",
     help="The output filetype.",
-    type=click.Choice(tuple(AUDIO_EXTENSIONS), case_sensitive=False),
+    type=click.Choice(AUDIO_EXTENSIONS, case_sensitive=False),
     default="wav",
 )
 @baet_config()
@@ -253,7 +268,6 @@ def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str)
     "--include",
     "includes",
     multiple=True,
-    type=RegexPattern,
     show_default=False,
     default=[],
     help="Include files matching this pattern.",
@@ -262,7 +276,6 @@ def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str)
     "--exclude",
     "excludes",
     multiple=True,
-    type=RegexPattern,
     show_default=False,
     default=[],
     help="Exclude files matching this pattern.",
@@ -273,29 +286,62 @@ def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str)
     help="Specify which video extensions to include in the directory.",
     multiple=True,
     type=click.Choice(VIDEO_EXTENSIONS_NO_DOT, case_sensitive=False),
-    default=tuple(VIDEO_EXTENSIONS_NO_DOT),
+    default=[],
+)
+@click.option(
+    "--case-sensitive/--case-insensitive",
+    "case_sensitive",
+    default=False,
+    help="Whether to match case sensitively.",
+    show_default=True,
 )
 @baet_config()
 @processor
 def filter_command(
     job: ExtractJob,
-    includes: Sequence[Pattern[str]],
-    excludes: Sequence[Pattern[str]],
+    includes: Sequence[str],
+    excludes: Sequence[str],
     extensions: Sequence[VideoExtension_NoDot],
+    case_sensitive: bool,
 ) -> ExtractJob:
     """Filter files for selection when providing a directory."""
-    escaped_extensions = [re.escape(e) for e in extensions]
-    include_extensions = re.compile(rf".*({"|".join(escaped_extensions)})")
+    flag = re.IGNORECASE if not case_sensitive else re.NOFLAG
 
-    logger.info("Including files with extension: %r", ", ".join([f'"{e}"' for e in escaped_extensions]))
+    include_patterns = []
+    exclude_patterns = []
+    extensions_patterns = []
+
+    pattern_list_pairs = zip(
+        [includes, excludes, extensions],
+        [include_patterns, exclude_patterns, extensions_patterns],
+        strict=True,
+    )
+
+    try:
+        for patterns, lst in pattern_list_pairs:
+            for pattern in patterns:
+                lst.append(re.compile(pattern, flag))
+    except re.error as e:
+        logger.error("Error: %s", e)
+        raise click.BadParameter("Invalid pattern", param_hint="pattern") from e
+
+    include_patterns = [re.compile(p, flag) for p in includes]
+    exclude_patterns = [re.compile(p, flag) for p in excludes]
+    extensions_patterns = [re.compile(f".*{re.escape(e)}$", flag) for e in extensions]
+
+    logger.info("Filtering is case sensitivity: %s", case_sensitive)
 
     if includes:
-        logger.info("Include file patterns: %r", ", ".join([f'"{p.pattern}"' for p in includes]))
+        logger.info(pretty_join(includes, "Include file patterns"))
 
     if excludes:
-        logger.info("Exclude file patterns: %r", ", ".join([f'"{p.pattern}"' for p in excludes]))
+        logger.info(pretty_join(excludes, "Exclude file patterns"))
 
-    job.includes.append(include_extensions)
-    job.includes.extend(list(includes))
-    job.excludes.extend(list(excludes))
+    if extensions:
+        logger.info(pretty_join(extensions, "Including extensions"))
+
+    job.includes.extend(include_patterns)
+    job.excludes.extend(exclude_patterns)
+    job.include_extensions.extend(extensions_patterns)
+
     return job

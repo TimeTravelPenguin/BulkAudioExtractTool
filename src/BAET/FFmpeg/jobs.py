@@ -13,6 +13,7 @@ from more_itertools import first_true
 import ffmpeg
 from BAET._config.logging import create_logger
 from BAET.cli.types import FFmpegArgsRepr
+from BAET.helpers.string_helpers import pretty_join
 from BAET.typing import AudioStream, FFmpegOutput, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
 from BAET.utils import micro_to_hhmmss
 
@@ -131,11 +132,13 @@ class AudioExtractJob:
         }
 
         logger.info(
-            "Parsed duration for %r: %s",
-            self.input_file,
-            ", ".join(
-                f"\n{" " * 4}Stream index {k}: {v} ({micro_to_hhmmss(v)})" for k, v in self.durations_ms_dict.items()
+            pretty_join(
+                list(self.durations_ms_dict.items()),
+                "Parsed duration for %r",
+                formatter=lambda kvp: f"Stream index {kvp[0]}: {kvp[1]} ({micro_to_hhmmss(kvp[1])})",
+                force_newline=True,
             ),
+            self.input_file,
         )
 
     def __rich_repr__(self) -> rich.repr.Result:
