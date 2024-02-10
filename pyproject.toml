@@ -53,7 +53,7 @@ rich-click = "^1.7.3"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.5"
-debugpy = "^1.8.0"
+debugpy = "^1.8.1"
 docformatter = "1.7.5"
 faker = "^22.4.0"
 mypy = "*"
