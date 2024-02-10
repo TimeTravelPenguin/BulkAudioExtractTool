@@ -52,7 +52,7 @@ rich-argparse = "^1.4.0"
 rich-click = "^1.7.3"
 
 [tool.poetry.group.dev.dependencies]
-bandit = "1.7.5"
+bandit = "1.7.7"
 debugpy = "^1.8.0"
 docformatter = "1.7.5"
 faker = "^22.4.0"
