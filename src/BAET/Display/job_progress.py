@@ -85,7 +85,7 @@ class FFmpegJobProgress(ConsoleRenderable):
 
         output = self.job.stream_indexed_outputs[stream_index]
 
-        logger.info("Running: %s", " ".join(ffmpeg.compile(output)))
+        logger.debug("Running: %s", " ".join(ffmpeg.compile(output)))
 
         proc = ffmpeg.run_async(
             output,
