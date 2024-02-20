@@ -64,6 +64,13 @@ def processor[**P](
 
 @click.group(chain=True, invoke_without_command=True)
 @click.option(
+    "--overwrite",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Overwrite existing files.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -71,22 +78,27 @@ def processor[**P](
     help="Run without actually producing any output.",
 )
 @baet_config()
-def extract(dry_run: bool) -> None:
+def extract(dry_run: bool, overwrite: bool) -> None:
     """Extract click command."""
-    pass
+    if not overwrite:
+        app_console.print(
+            "[bold red]This application is currently still in development.",
+            "[bold red]Any generated files will overwrite existing files with the same name.",
+            end="\n\n",
+        )
+
+        click.confirm("Do you want to continue?", abort=True)
 
 
 @extract.result_callback()
 @click.pass_context
-def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], ExtractJob]], dry_run: bool) -> None:
+def process(
+    ctx: click.Context,
+    processors: Sequence[Callable[[ExtractJob], ExtractJob]],
+    dry_run: bool,
+    overwrite: bool,
+) -> None:
     """Process the extract command."""
-    app_console.print(
-        "[bold red]This application is currently still in development.",
-        "[bold red]Any generated files will overwrite existing files with the same name.",
-        end="\n\n",
-    )
-    click.confirm("Do you want to continue?", abort=True)
-
     logger.info("Dry run: %s", dry_run)
 
     job: ExtractJob = ExtractJob()
