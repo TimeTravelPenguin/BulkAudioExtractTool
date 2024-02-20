@@ -106,8 +106,9 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
     for exclude in job.excludes:
         job.input_outputs = list(filter(lambda x: not exclude.match(x[0].name), job.input_outputs))
 
-    for extension in job.include_extensions:
-        job.input_outputs = list(filter(lambda x: extension.match(x[0].name), job.input_outputs))
+    job.input_outputs = list(
+        filter(lambda x: any(ext.match(x[0].name) for ext in job.include_extensions), list(job.input_outputs))
+    )
 
     logger.debug("Job (Filtered Inputs):\n%s", pretty_repr(job))
     logger.info(pretty_join(job.input_outputs, "Filtered inputs", formatter=lambda inout: f"{inout[0]!r}"))
@@ -129,6 +130,8 @@ def process(ctx: click.Context, processors: Sequence[Callable[[ExtractJob], Extr
 
 
 def build_job(file: Path, out_path: Path) -> AudioExtractJob:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
     audio_streams: list[AudioStream] = []
     indexed_outputs: MutableMapping[int, Stream] = {}
 
@@ -148,7 +151,8 @@ def build_job(file: Path, out_path: Path) -> AudioExtractJob:
             indexed_outputs[stream_index] = (
                 ffmpeg.output(
                     ffmpeg_input[f"a:{idx}"],
-                    f"{output_path.resolve().as_posix().replace(" ", r"\ ")}",
+                    f"{output_path.resolve().as_posix()}",  # .replace(" ", r"\ ")}",
+                    format=output_path.suffix.lstrip("."),
                     acodec="pcm_s16le",
                     audio_bitrate=sample_rate,
                 )
@@ -235,7 +239,7 @@ def input_file(job: ExtractJob, input_: Path, output: Path | None, filetype: str
     "-o",
     help="The output directory.",
     default=None,
-    show_default="{input parent}/outputs",
+    show_default="[INPUT]",
     type=click.Path(exists=False, file_okay=False, resolve_path=True, path_type=Path),
 )
 @click.option(
@@ -250,7 +254,7 @@ def input_file(job: ExtractJob, input_: Path, output: Path | None, filetype: str
 def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str) -> ExtractJob:
     """Extract specific tracks from a video file."""
     if output is None:
-        output = input_ / "outputs"
+        output = input_
 
     logger.info("Extracting audio tracks from video in dir: %r", input_)
     logger.info("Extracting to directory: %r", output)
@@ -259,7 +263,12 @@ def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str)
     if not filetype.startswith("."):
         filetype = f".{filetype}"
 
-    job.input_outputs.extend([(f, output / f.with_suffix(filetype).name) for f in input_.iterdir() if f.is_file()])
+    for input_file in input_.iterdir():
+        if not input_file.is_file():
+            continue
+        file_output = output / input_file.stem / input_file.with_suffix(filetype).name
+        job.input_outputs.append((input_file, file_output))
+
     return job
 
 
@@ -286,7 +295,7 @@ def input_dir(job: ExtractJob, input_: Path, output: Path | None, filetype: str)
     help="Specify which video extensions to include in the directory.",
     multiple=True,
     type=click.Choice(VIDEO_EXTENSIONS_NO_DOT, case_sensitive=False),
-    default=[],
+    default=VIDEO_EXTENSIONS_NO_DOT,
 )
 @click.option(
     "--case-sensitive/--case-insensitive",
@@ -327,7 +336,7 @@ def filter_command(
 
     include_patterns = [re.compile(p, flag) for p in includes]
     exclude_patterns = [re.compile(p, flag) for p in excludes]
-    extensions_patterns = [re.compile(f".*{re.escape(e)}$", flag) for e in extensions]
+    extensions_patterns = [re.compile(rf".*\.{re.escape(e)}$", flag) for e in extensions]
 
     logger.info("Filtering is case sensitivity: %s", case_sensitive)
 
@@ -339,6 +348,7 @@ def filter_command(
 
     if extensions:
         logger.info(pretty_join(extensions, "Including extensions"))
+        logger.info(pretty_join(extensions_patterns, "Including' extensions", formatter=lambda p: p.pattern))
 
     job.includes.extend(include_patterns)
     job.excludes.extend(exclude_patterns)
