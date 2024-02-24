@@ -42,7 +42,7 @@ debug = "BAET.cli.__main__:debug"
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
 asyncio = "^3.4.3"
-bidict = "^0.22.1"
+bidict = "^0.23.1"
 click-option-group = "^0.5.6"
 ffmpeg-python = "^0.2.0"
 more-itertools = "^10.1.0"
