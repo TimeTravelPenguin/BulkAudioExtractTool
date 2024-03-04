@@ -26,7 +26,7 @@
 BAET will run on Windows, macOS, and Linux. Listed below the pre-installation requirements:
 
 - FFmpeg ([website](https://ffmpeg.org))
-- Python v3.11+ ([website](https://www.python.org))
+- Python v3.12+ ([website](https://www.python.org))
 
 ### Installing BAET
 
