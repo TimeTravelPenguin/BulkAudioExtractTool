@@ -1,6 +1,5 @@
 """Helper methods for string manipulation."""
 
-
 from collections.abc import Callable, Sequence
 
 
