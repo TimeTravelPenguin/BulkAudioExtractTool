@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "BAET"
-version = "1.0.0.post128.dev0"
+version = "1.0.2"
 # TODO: Make PEP621 compliant - https://github.com/python-poetry/roadmap/issues/3
 #requires-python = ">=3.11"
 description = "A tool to bulk extract audio tracks from video using FFmpeg"
