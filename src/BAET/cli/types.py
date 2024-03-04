@@ -20,10 +20,13 @@ class RegexPatternParamType(click.ParamType):
         if isinstance(value, Pattern):
             return value
 
+        pattern: Pattern[str]
         try:
-            return re.compile(value)
+            pattern = re.compile(value)
         except ValueError:
             self.fail(f"'{value!r}' is an invalid pattern...", param, ctx)
+
+        return pattern
 
 
 RegexPattern = RegexPatternParamType()

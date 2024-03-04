@@ -49,8 +49,7 @@ rich-click = "^1.7.3"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.5"
-black = "^24.2.0" # For GitHub CI Action
-debugpy = "^1.8.0"
+debugpy = "^1.8.0" # TODO: Needs PEP 695 support
 docformatter = "1.7.5"
 faker = "^23.2.1"
 mypy = "*"

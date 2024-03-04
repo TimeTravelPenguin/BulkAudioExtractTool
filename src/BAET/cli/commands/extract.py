@@ -55,7 +55,8 @@ def processor[**P](
     @wraps(f)
     def new_func(*args: P.args, **kwargs: P.kwargs) -> Callable[[ExtractJob], ExtractJob]:
         def _processor(job: ExtractJob) -> ExtractJob:
-            return f(job, *args, **kwargs)
+            updated_job: ExtractJob = f(job, *args, **kwargs)  # Need variable because MyPy doesn't understand PEP 695
+            return updated_job
 
         return _processor
 
@@ -134,6 +135,21 @@ def process(
 
 
 def build_job(file: Path, out_path: Path) -> AudioExtractJob:
+    """Build an audio extraction job.
+
+    Parameters
+    ----------
+    file : Path
+        The file to extract audio from.
+
+    out_path : Path
+        The output path to extract to.
+
+    Returns
+    -------
+    AudioExtractJob
+        The audio extraction job.
+    """
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     audio_streams: list[AudioStream] = []
@@ -168,6 +184,13 @@ def build_job(file: Path, out_path: Path) -> AudioExtractJob:
 
 
 def run_synchronously(jobs: list[AudioExtractJob]) -> None:
+    """Run audio extraction jobs synchronously.
+
+    Parameters
+    ----------
+    jobs : list[AudioExtractJob]
+        The extraction jobs for FFmpeg to run.
+    """
     display = Table.grid()
 
     job_progresses = [FFmpegJobProgress(job) for job in jobs]
@@ -320,9 +343,9 @@ def filter_command(
     """Filter files for selection when providing a directory."""
     flag = re.IGNORECASE if not case_sensitive else re.NOFLAG
 
-    include_patterns = []
-    exclude_patterns = []
-    extensions_patterns = []
+    include_patterns: list[Pattern[str]] = []
+    exclude_patterns: list[Pattern[str]] = []
+    extensions_patterns: list[Pattern[str]] = []
 
     pattern_list_pairs = zip(
         [includes, excludes, extensions],

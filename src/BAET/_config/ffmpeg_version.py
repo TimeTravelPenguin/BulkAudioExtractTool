@@ -25,7 +25,7 @@ def get_ffmpeg_version() -> str | None:
         if not ffmpeg:
             return None
 
-        proc = subprocess.run([ffmpeg, "-version"], capture_output=True, check=True)
+        proc = subprocess.run([ffmpeg, "-version"], capture_output=True, check=True)  # noqa: S603
 
         if proc.returncode != 0:
             err = proc.stderr.decode("utf-8")

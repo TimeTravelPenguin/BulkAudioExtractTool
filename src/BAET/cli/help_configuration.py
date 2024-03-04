@@ -18,7 +18,7 @@ def baet_config(
     use_markdown_emoji: bool = True,
     use_rich_markup: bool = True,
 ) -> Any:
-    """Decorator for BAET help config."""
+    """Apply a consistent help command as a function decorator."""
 
     def wrapper(func: Callable[..., Any]) -> Any:
         @click.rich_config(

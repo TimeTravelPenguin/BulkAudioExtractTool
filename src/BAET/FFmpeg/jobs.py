@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from fractions import Fraction
 from logging import Logger
 from pathlib import Path
-from typing import overload
+from typing import Any, overload
 
 import rich.repr
 from more_itertools import first_true
@@ -14,8 +14,8 @@ import ffmpeg
 from BAET._config.logging import create_logger
 from BAET.cli.types import FFmpegArgsRepr
 from BAET.helpers.string_helpers import pretty_join
+from BAET.helpers.time_conversion import micro_to_hhmmss
 from BAET.typing import AudioStream, FFmpegOutput, IndexedAudioStream, IndexedOutputs, Millisecond, StreamIndex
-from BAET.utils import micro_to_hhmmss
 
 logger: Logger = create_logger()
 
@@ -32,7 +32,8 @@ class JobMetadata:
         *,
         audio_stream_indexes: Sequence[StreamIndex],
         job_outputs: Sequence[FFmpegOutput],
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -41,7 +42,8 @@ class JobMetadata:
         output_dir: Path,
         *,
         stream_indexed_output_map: IndexedOutputs,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     def __init__(
         self,
@@ -108,7 +110,56 @@ class JobMetadata:
         )
 
 
+def stream_duration_ms(stream: AudioStream) -> Millisecond:
+    """Get the duration of the audio stream in milliseconds.
+
+    Parameters
+    ----------
+    stream : AudioStream
+        The audio stream to get the duration for
+
+    Returns
+    -------
+    Millisecond
+        The duration in milliseconds
+    """
+    if "duration_ts" in stream:
+        # Convert the duration from seconds to microseconds
+        return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
+    elif "tags" in stream:
+        _, duration = first_true(
+            stream["tags"].items(),
+            pred=lambda x: x[0].lower() == "duration",
+            default=(None, None),
+        )
+
+        if duration is None:
+            raise ValueError(f"Could not find duration in {stream!r}")
+
+        # Get the duration via regex. .strptime() has leftover data
+        pattern = re.compile(r"(?P<H>\d+):(?P<M>\d+):(?P<S>\d+(?:\.\d+)?)")
+        match = pattern.match(duration)
+        if match:
+            h, m, s = match.group("H", "M", "S")
+            return 1_000_000 * (float(h) * 3600 + float(m) * 60 + float(s))
+        else:
+            raise ValueError(f"Could not parse duration from {duration!r}")
+
+    raise ValueError(f"Could not find duration in {stream!r}")
+
+
 class AudioExtractJob:
+    """An FFmpeg job to extract audio from a video file.
+
+    Attributes
+    ----------
+    input_file : Path
+    stream_indexed_outputs : IndexedOutputs
+    audio_streams : Sequence[AudioStream]
+    indexed_audio_streams : IndexedAudioStream
+    durations_ms_dict : dict[StreamIndex, Millisecond]
+    """
+
     def __init__(
         self,
         input_file: Path,
@@ -126,7 +177,7 @@ class AudioExtractJob:
 
         # TODO: Do we need this?
         self.durations_ms_dict: dict[StreamIndex, Millisecond] = {
-            stream["index"]: self.stream_duration_ms(stream) for stream in audio_streams
+            stream["index"]: stream_duration_ms(stream) for stream in audio_streams
         }
 
         logger.info(
@@ -140,6 +191,13 @@ class AudioExtractJob:
         )
 
     def __rich_repr__(self) -> rich.repr.Result:
+        """Return a rich representation of the object.
+
+        Returns
+        -------
+        rich.repr.Result
+            The rich representation.
+        """
         yield "input_file", self.input_file
         yield "indexed_audio_streams", self.indexed_audio_streams
         yield "durations_ms_dict", self.durations_ms_dict
@@ -148,33 +206,19 @@ class AudioExtractJob:
             {k: FFmpegArgsRepr(ffmpeg.get_args(v)) for k, v in self.stream_indexed_outputs.items()},
         )
 
-    @classmethod
-    def stream_duration_ms(cls, stream: AudioStream) -> Millisecond:
-        if "duration_ts" in stream:
-            # Convert the duration from seconds to microseconds
-            return 1_000_000 * float(stream["duration_ts"]) * float(Fraction(stream["time_base"]))
-        elif "tags" in stream:
-            _, duration = first_true(
-                stream["tags"].items(),
-                pred=lambda x: x[0].lower() == "duration",
-                default=(None, None),
-            )
-
-            if duration is None:
-                raise ValueError(f"Could not find duration in {stream!r}")
-
-            # Get the duration via regex. .strptime() has leftover data
-            pattern = re.compile(r"(?P<H>\d+):(?P<M>\d+):(?P<S>\d+(?:\.\d+)?)")
-            match = pattern.match(duration)
-            if match:
-                h, m, s = match.group("H", "M", "S")
-                return 1_000_000 * (float(h) * 3600 + float(m) * 60 + float(s))
-            else:
-                raise ValueError(f"Could not parse duration from {duration!r}")
-
-        raise ValueError(f"Could not find duration in {stream!r}")
-
     def stream(self, index: StreamIndex) -> AudioStream:
+        """Get the audio stream with the given index.
+
+        Parameters
+        ----------
+        index : StreamIndex
+            The index of the audio stream to get
+
+        Returns
+        -------
+        AudioStream
+            The audio stream with the given index
+        """
         stream: AudioStream | None = first_true(
             self.audio_streams,
             default=None,
@@ -188,10 +232,12 @@ class AudioExtractJob:
 
 
 if __name__ == "__main__":
+    mapping: dict[StreamIndex, Any] = {x: f"Job {x:02d}" for x in range(1, 5)}
+
     meta = JobMetadata(
         input_file=Path("in"),
         output_dir=Path("out"),
-        stream_indexed_output_map={x: f"Job {x:02d}" for x in range(1, 5)},  # type: ignore
+        stream_indexed_output_map=mapping,
     )
 
     rich.print(meta)

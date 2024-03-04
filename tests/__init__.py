@@ -1,3 +1,4 @@
+"""Test package for BAET."""
 from rich.console import Console
 
 from BAET import app_theme

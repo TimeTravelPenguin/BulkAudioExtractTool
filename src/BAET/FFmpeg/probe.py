@@ -1,4 +1,4 @@
-"""Utilities for FFmpeg operations."""
+"""Utilities for FFmpeg probe operations."""
 
 import contextlib
 from collections.abc import Iterator
