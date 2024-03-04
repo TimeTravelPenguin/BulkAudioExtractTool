@@ -80,14 +80,6 @@ def processor[**P](
 @baet_config()
 def extract(dry_run: bool, overwrite: bool) -> None:
     """Extract click command."""
-    if not overwrite:
-        app_console.print(
-            "[bold red]This application is currently still in development.",
-            "[bold red]Any generated files will overwrite existing files with the same name.",
-            end="\n\n",
-        )
-
-        click.confirm("Do you want to continue?", abort=True)
 
 
 @extract.result_callback()
@@ -99,6 +91,15 @@ def process(
     overwrite: bool,
 ) -> None:
     """Process the extract command."""
+    if not overwrite:
+        app_console.print(
+            "[bold red]This application is currently still in development.",
+            "[bold red]Any generated files will overwrite existing files with the same name.",
+            end="\n\n",
+        )
+
+        click.confirm("Do you want to continue?", abort=True)
+
     logger.info("Dry run: %s", dry_run)
 
     job: ExtractJob = ExtractJob()
