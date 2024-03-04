@@ -8,8 +8,8 @@ docstring-code-format = true
 
 [lint]
 extend-select = [
-   "F", "I", "E", "W", "I", "D", "S", "G", "C4",
-   "UP", "ANN", "B9", "A00", "PT", "Q0", "SIM", "RUF",
+   "F", "I", "E", "W", "D", "S", "G", "C4",
+   "UP", "ANN", "B9", "A00", "PT", "SIM", "RUF",
 
 ]
 extend-ignore = [ "ANN101", "ANN401" ]

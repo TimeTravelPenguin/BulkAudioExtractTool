@@ -1,4 +1,5 @@
 """Functions for validating files."""
+
 from pathlib import Path
 
 from BAET.constants import VIDEO_EXTENSIONS

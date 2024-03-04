@@ -1,4 +1,5 @@
 """Display job progress for FFmpeg audio extraction."""
+
 from bidict import MutableBidirectionalMapping, bidict
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, Group, RenderResult
 from rich.highlighter import ReprHighlighter
