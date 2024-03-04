@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "BAET"
-version = "1.0.0.post128.dev0"
+version = "1.0.2"
 # TODO: Make PEP621 compliant - https://github.com/python-poetry/roadmap/issues/3
 #requires-python = ">=3.11"
 description = "A tool to bulk extract audio tracks from video using FFmpeg"
@@ -37,7 +37,7 @@ repository = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 baet = "BAET.__main__:main"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0.0"
+python = ">=3.12,<4.0.0"
 asyncio = "^3.4.3"
 bidict = "^0.23.1"
 click-option-group = "^0.5.6"
