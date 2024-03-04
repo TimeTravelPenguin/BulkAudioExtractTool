@@ -1,7 +1,5 @@
 """Application commandline interface."""
 
-import re
-
 import rich_click as click
 
 from BAET._config.logging import app_logger, configure_logging, create_logger
@@ -10,8 +8,6 @@ from BAET.cli.help_configuration import baet_config
 from .commands import extract, probe
 
 logger = create_logger()
-
-file_type_pattern = re.compile(r"^\.?(\w+)$")
 
 
 @click.group("baet")
@@ -34,8 +30,3 @@ def cli(logging: int) -> None:
 
 cli.add_command(extract.extract)
 cli.add_command(probe.probe)
-
-
-def test() -> None:
-    """Test the CLI."""
-    cli()

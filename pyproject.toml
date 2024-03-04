@@ -34,19 +34,15 @@ homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 repository = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
-# baet = "BAET.__main__:main"
-# cli = "BAET.cli.cli:test"
-baet = "BAET.cli.cli:cli"
-debug = "BAET.cli.__main__:debug"
+baet = "BAET.__main__:main"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
 asyncio = "^3.4.3"
-bidict = "^0.22.1"
+bidict = "^0.23.1"
 click-option-group = "^0.5.6"
 ffmpeg-python = "^0.2.0"
 more-itertools = "^10.1.0"
-pydantic = "^2.6.0"
 rich = "^13.7.0"
 rich-argparse = "^1.4.0"
 rich-click = "^1.7.3"
@@ -62,7 +58,7 @@ pre-commit = "^3.6.0"
 pylint = "*"
 pytest = "^8.0.2"
 pytest-repeat = "^0.9.3"
-ruff = "^0.1.14"
+ruff = "^0.3.0"
 types-pygments = "^2.17.0.0"
 
 [tool.mypy]
