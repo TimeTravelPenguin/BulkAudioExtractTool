@@ -34,10 +34,7 @@ homepage = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 repository = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 
 [tool.poetry.scripts]
-# baet = "BAET.__main__:main"
-# cli = "BAET.cli.cli:test"
-baet = "BAET.cli.cli:cli"
-debug = "BAET.cli.__main__:debug"
+baet = "BAET.__main__:main"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
