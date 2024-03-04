@@ -37,7 +37,7 @@ repository = "https://github.com/TimeTravelPenguin/BulkAudioExtractTool"
 baet = "BAET.__main__:main"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0.0"
+python = ">=3.12,<4.0.0"
 asyncio = "^3.4.3"
 bidict = "^0.23.1"
 click-option-group = "^0.5.6"
