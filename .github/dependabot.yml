@@ -5,16 +5,20 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    versioning-strategy: increase
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "sunday"
+      interval: weekly
+      day: sunday
       time: "08:00"
-      timezone: "Australia/Sydney"
-    target-branch: "dev"
-    assignees:
-      - "TimeTravelPenguin"
-    reviewers:
-      - "TimeTravelPenguin"
+      timezone: Australia/Sydney
+    target-branch: dependabot
+  - package-ecosystem: pip
+    versioning-strategy: increase
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "08:00"
+      timezone: Australia/Sydney
+    target-branch: dependabot
